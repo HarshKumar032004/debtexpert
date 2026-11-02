@@ -1,0 +1,212 @@
+import { siteConfig } from "@/config/site";
+
+export interface LeadData {
+  fullName: string;
+  phone: string;
+  email?: string;
+  city?: string;
+  totalDebt?: string;
+  loanType?: string;
+  harassmentLevel?: string;
+  facingHarassment?: boolean;
+  banks?: string;
+  message?: string;
+  source?: string;
+}
+
+export interface LeadResponse {
+  success: boolean;
+  referenceId: string;
+  whatsappUrl: string;
+  error?: string;
+}
+
+/**
+ * Validates a 10-digit Indian Mobile Number
+ * Handles prefixes like +91, 91, 0, spaces, and hyphens.
+ * Indian mobiles start with 6, 7, 8, or 9.
+ */
+export function validateIndianPhone(input: string): {
+  isValid: boolean;
+  cleaned: string;
+  error?: string;
+} {
+  if (!input || !input.trim()) {
+    return { isValid: false, cleaned: "", error: "Mobile number is required" };
+  }
+
+  // Remove any non-digit characters except leading plus if any
+  let digits = input.replace(/\D/g, "");
+
+  // If prefixed with 91 (like 919876543210) and has 12 digits, strip country code
+  if (digits.length === 12 && digits.startsWith("91")) {
+    digits = digits.slice(2);
+  }
+
+  // If prefixed with 0 (like 09876543210) and has 11 digits, strip 0
+  if (digits.length === 11 && digits.startsWith("0")) {
+    digits = digits.slice(1);
+  }
+
+  if (digits.length !== 10) {
+    return {
+      isValid: false,
+      cleaned: digits,
+      error: "Please enter a valid 10-digit mobile number",
+    };
+  }
+
+  // Must begin with 6, 7, 8, or 9
+  if (!/^[6-9]/.test(digits)) {
+    return {
+      isValid: false,
+      cleaned: digits,
+      error: "Indian mobile numbers must start with 6, 7, 8, or 9",
+    };
+  }
+
+  return {
+    isValid: true,
+    cleaned: digits,
+  };
+}
+
+/**
+ * Generates an official-looking Case Reference ID
+ * Example: DSE-2026-8492
+ */
+export function generateReferenceId(): string {
+  const year = new Date().getFullYear();
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  return `DSE-${year}-${randomSuffix}`;
+}
+
+/**
+ * Human-friendly labels for debt, loan types, and harassment
+ */
+export function formatLoanTypeLabel(raw?: string): string {
+  if (!raw) return "Unsecured Loan / Credit Card";
+  const map: Record<string, string> = {
+    personal: "Personal Loan",
+    "personal-loan": "Personal Loan (Unsecured)",
+    "credit-card": "Credit Card Outstanding",
+    cards: "Credit Card Debt",
+    multiple: "Multiple Loans & Cards",
+    business: "Business / MSME Loan",
+    "business-loan": "Business Loan (MSME/OD)",
+    "anti-harassment": "Anti-Harassment Legal Shield",
+  };
+  return map[raw] || raw;
+}
+
+export function formatHarassmentLabel(level?: string, facing?: boolean): string {
+  if (level) {
+    const map: Record<string, string> = {
+      none: "No active harassment (Proactive Settlement)",
+      moderate: "Moderate (10-20 calls/day + threatening notices)",
+      critical: "CRITICAL EMERGENCY (30+ calls/day, home visits, relatives contacted)",
+    };
+    return map[level] || level;
+  }
+  if (facing === true) {
+    return "URGENT (Facing recovery calls/doorstep threats)";
+  }
+  if (facing === false) {
+    return "None (Seeking amicable settlement)";
+  }
+  return "Assessing Legal Protection";
+}
+
+/**
+ * Formats a structured WhatsApp message for senior advocate desk
+ */
+export function formatWhatsAppLeadMessage(
+  lead: LeadData & { referenceId: string }
+): string {
+  const lines = [
+    `⚖️ *LEGAL CASE EVALUATION INITIATED*`,
+    `📁 *Case Ref:* ${lead.referenceId}`,
+    `----------------------------------------`,
+    `👤 *Client Name:* ${lead.fullName.trim()}`,
+    `📱 *Mobile:* +91 ${lead.phone}`,
+  ];
+
+  if (lead.email) {
+    lines.push(`📧 *Email:* ${lead.email.trim()}`);
+  }
+  if (lead.city) {
+    lines.push(`📍 *City / State:* ${lead.city.trim()}`);
+  }
+  if (lead.totalDebt) {
+    lines.push(`💰 *Total Unsecured Debt:* ${lead.totalDebt}`);
+  }
+  if (lead.loanType) {
+    lines.push(`📑 *Loan Type:* ${formatLoanTypeLabel(lead.loanType)}`);
+  }
+
+  const harassment = formatHarassmentLabel(lead.harassmentLevel, lead.facingHarassment);
+  lines.push(`🚨 *Harassment Status:* ${harassment}`);
+
+  if (lead.banks && lead.banks.trim()) {
+    lines.push(`🏦 *Lending Institutions:* ${lead.banks.trim()}`);
+  }
+  if (lead.message && lead.message.trim()) {
+    lines.push(`📝 *Case Notes:* ${lead.message.trim()}`);
+  }
+
+  lines.push(`----------------------------------------`);
+  lines.push(`_Submitted via Debt Support Expert Legal Portal_`);
+  lines.push(`_I request an advocate to review my file and stop recovery harassment._`);
+
+  return lines.join("\n");
+}
+
+/**
+ * Submits lead data to Next.js API route /api/lead
+ */
+export async function submitLead(data: LeadData): Promise<LeadResponse> {
+  const phoneValidation = validateIndianPhone(data.phone);
+  if (!phoneValidation.isValid) {
+    return {
+      success: false,
+      referenceId: "",
+      whatsappUrl: "",
+      error: phoneValidation.error || "Invalid mobile number",
+    };
+  }
+
+  const referenceId = generateReferenceId();
+  const cleanedData = {
+    ...data,
+    phone: phoneValidation.cleaned,
+    referenceId,
+  };
+
+  const whatsappMessage = formatWhatsAppLeadMessage(cleanedData);
+  const whatsappUrl = `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(
+    whatsappMessage
+  )}`;
+
+  try {
+    const res = await fetch("/api/lead", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(cleanedData),
+    });
+
+    if (!res.ok) {
+      console.warn("API lead submission responded with status:", res.status);
+    }
+  } catch (err) {
+    // We log but do not block the user from proceeding to WhatsApp
+    console.error("Error submitting lead to /api/lead:", err);
+  }
+
+  return {
+    success: true,
+    referenceId,
+    whatsappUrl,
+  };
+}

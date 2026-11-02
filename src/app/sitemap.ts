@@ -1,8 +1,10 @@
 import { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
+import { blogPostsData } from "@/data/blogs";
+import { citiesData } from "@/data/cities";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = [
+  const staticRoutes = [
     {
       url: siteConfig.url,
       lastModified: new Date(),
@@ -77,5 +79,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  return routes;
+  // Dynamic Blog Post routes
+  const blogRoutes = Object.keys(blogPostsData).map((slug) => ({
+    url: `${siteConfig.url}/blog/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
+
+  // Programmatic Local SEO City routes
+  const cityRoutes = Object.keys(citiesData).map((city) => ({
+    url: `${siteConfig.url}/loan-settlement/${city}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.85,
+  }));
+
+  return [...staticRoutes, ...blogRoutes, ...cityRoutes];
 }

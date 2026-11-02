@@ -11,9 +11,9 @@ import { siteConfig } from "@/config/site";
 
 export function CTASection() {
   return (
-    <section className="py-20 bg-slate-50 dark:bg-slate-950 relative overflow-hidden" id="consultation">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    <section className="py-12 sm:py-16 lg:py-24 bg-slate-50 dark:bg-slate-950 relative overflow-hidden" id="consultation">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Column: Reassurance & Direct Call */}
           <div className="lg:col-span-5 space-y-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-primary-700 dark:text-blue-300 text-xs font-semibold">
@@ -21,7 +21,7 @@ export function CTASection() {
               <span>Pan-India Legal Representation</span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
               Take the First Step Toward a{" "}
               <span className="text-primary-600 dark:text-blue-400">Debt-Free Future</span> Today.
             </h2>
@@ -33,7 +33,7 @@ export function CTASection() {
             </p>
 
             {/* Direct Helpline Card */}
-            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-border shadow-md space-y-4">
+            <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-border shadow-md space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-11 w-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                   <PhoneCall className="h-5 w-5" />
@@ -44,7 +44,7 @@ export function CTASection() {
                   </div>
                   <a
                     href={`tel:${siteConfig.phone.replace(/[^0-9+]/g, "")}`}
-                    className="text-xl font-extrabold text-foreground hover:text-primary-600 transition-colors"
+                    className="text-lg sm:text-xl font-extrabold text-foreground hover:text-primary-600 transition-colors"
                   >
                     {siteConfig.phoneDisplay}
                   </a>

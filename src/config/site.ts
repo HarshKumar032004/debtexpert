@@ -15,12 +15,26 @@ export const siteConfig = {
   ogImage: "https://debtsupportexpert.com/og-image.jpg",
   description:
     "India's Premier Legal Advisory & Loan Settlement Consultancy. Legally protect yourself against recovery agent harassment and settle personal loans, credit cards, and business debts with up to 50%-75% waiver under RBI guidelines.",
+  // Primary Client Contact
   phone: "+91 98765 43210",
   phoneDisplay: "+91 98765 43210",
+  phoneTel: "+919876543210",
+  // Priority / Emergency Harassment Helpline
+  emergencyPhone: "+91 98765 43211",
+  emergencyPhoneDisplay: "+91 98765 43211",
+  emergencyPhoneTel: "+919876543211",
+  // WhatsApp Configuration
   whatsappNumber: "919876543210",
   whatsappMessage:
     "Hello Debt Support Expert, I need urgent legal assistance with loan settlement and recovery calls.",
+  getWhatsAppUrl(customMessage?: string): string {
+    const text = customMessage || this.whatsappMessage;
+    return `https://wa.me/${this.whatsappNumber}?text=${encodeURIComponent(text)}`;
+  },
+  // Official Corporate Email
   email: "support@debtsupportexpert.com",
+  legalEmail: "advocates@debtsupportexpert.com",
+  // Corporate Head Office Address
   address: {
     street: "Level 4, Cyber City, DLF Phase 2",
     city: "Gurugram",
@@ -28,6 +42,11 @@ export const siteConfig = {
     postalCode: "122002",
     country: "India",
   },
+  formattedAddress:
+    "Level 4, Cyber City, DLF Phase 2, Gurugram, Haryana - 122002, India",
+  operatingHours: "Mon - Sat: 9:30 AM - 7:00 PM IST",
+  emergencyHours: "24/7 Immediate Anti-Harassment Dispatch",
+
   services: [
     {
       title: "Personal Loan Settlement",

@@ -94,19 +94,19 @@ export default function ServicesPage() {
         url={`${siteConfig.url}/services`}
       />
 
-      <div className="container mx-auto px-4 sm:px-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hub Header */}
-        <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
+        <div className="max-w-3xl mx-auto text-center space-y-4 mb-10 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-50 dark:bg-primary-950/70 border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 text-xs font-semibold">
             <ShieldCheck className="h-4 w-4" />
             <span>Comprehensive Legal Advisory & Debt Relief</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
             Our Debt Settlement & Legal Protection Services
           </h1>
 
-          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed">
             Every debt problem requires a targeted legal strategy. Discover how our empanelled
             advocates shield your rights and negotiate definitive settlements with financial
             institutions across India.
@@ -114,15 +114,15 @@ export default function ServicesPage() {
         </div>
 
         {/* Services List Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-14 sm:mb-20">
           {serviceList.map((service, idx) => {
             const Icon = service.icon;
             return (
               <div
                 key={idx}
-                className="rounded-3xl border border-border bg-card p-8 flex flex-col justify-between shadow-sm hover:shadow-lg transition-all duration-200 group"
+                className="rounded-3xl border border-border bg-card p-5 sm:p-7 lg:p-8 flex flex-col justify-between shadow-sm hover:shadow-lg transition-all duration-200 group"
               >
-                <div className="space-y-5">
+                <div className="space-y-4 sm:space-y-5">
                   <div className="flex items-center justify-between">
                     <div className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                       <Icon className="h-6 w-6 text-foreground" />
@@ -133,10 +133,10 @@ export default function ServicesPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <h2 className="text-2xl font-bold text-foreground group-hover:text-primary-600 transition-colors">
+                    <h2 className="text-xl sm:text-2xl font-bold text-foreground group-hover:text-primary-600 transition-colors">
                       {service.title}
                     </h2>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       {service.description}
                     </p>
                   </div>
@@ -154,13 +154,13 @@ export default function ServicesPage() {
                   </div>
                 </div>
 
-                <div className="pt-8">
+                <div className="pt-6 sm:pt-8">
                   <Link
                     href={service.href}
-                    className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-slate-900 dark:bg-slate-800 hover:bg-primary-600 dark:hover:bg-primary-600 transition-colors shadow-sm"
+                    className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-slate-900 dark:bg-slate-800 hover:bg-primary-600 dark:hover:bg-primary-600 transition-colors shadow-sm text-center"
                   >
                     <span>View Service Details & Case Studies</span>
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 shrink-0" />
                   </Link>
                 </div>
               </div>
@@ -169,24 +169,24 @@ export default function ServicesPage() {
         </div>
 
         {/* Bottom Banner */}
-        <div className="rounded-3xl bg-slate-900 text-white p-8 sm:p-12 text-center space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold max-w-xl mx-auto">
+        <div className="rounded-3xl bg-slate-900 text-white p-5 sm:p-8 lg:p-12 text-center space-y-6">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold max-w-xl mx-auto">
             Not Sure Which Settlement Route Applies to Your Loans?
           </h2>
-          <p className="text-sm text-slate-300 max-w-lg mx-auto">
+          <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
             Book a complimentary debt portfolio audit with our advocates. We review your bank notices
             and recommend the exact legal action plan.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link
               href="/contact"
-              className="px-7 py-3.5 rounded-xl font-bold text-sm text-slate-900 bg-white hover:bg-slate-100 transition-colors shadow-md"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-900 bg-white hover:bg-slate-100 transition-colors shadow-md text-center"
             >
               Get Free Case Assessment
             </Link>
             <Link
               href="/calculator"
-              className="px-7 py-3.5 rounded-xl font-bold text-sm text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors text-center"
             >
               Calculate Settlement Savings
             </Link>

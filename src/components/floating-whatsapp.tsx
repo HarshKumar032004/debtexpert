@@ -12,7 +12,7 @@ export function FloatingWhatsApp() {
   )}`;
 
   return (
-    <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-3">
+    <div className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-3">
       {/* Tooltip on hover/initial display */}
       <div
         className={`hidden sm:flex items-center px-3.5 py-1.5 rounded-full bg-slate-900 text-white text-xs font-semibold shadow-lg border border-slate-700 transition-opacity duration-200 ${

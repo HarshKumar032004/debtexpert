@@ -11,12 +11,13 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
+import { cities } from "@/data/cities";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-slate-950 text-slate-300 border-t border-slate-800/80">
+    <footer className="bg-slate-950 text-slate-300 border-t border-slate-800/80 pb-24 md:pb-0">
       {/* Pre-footer Trust & Reassurance Banner */}
       <div className="border-b border-slate-800/80 bg-slate-900/60 py-8">
         <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -246,6 +247,29 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
+          </div>
+        </div>
+
+        {/* Top Cities We Serve (Programmatic Local SEO) */}
+        <div className="mt-12 pt-8 border-t border-slate-800/80">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              Top Cities We Serve (Local Debt Settlement & DRT Advocates)
+            </h4>
+            <span className="text-[11px] text-emerald-400 font-medium">
+              Pan-India Legal Notice & Anti-Harassment Coverage
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {cities.map((city) => (
+              <Link
+                key={city.slug}
+                href={`/loan-settlement/${city.slug}`}
+                className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 hover:bg-slate-800/60 transition-colors"
+              >
+                Loan Settlement in {city.name}
+              </Link>
+            ))}
           </div>
         </div>
 

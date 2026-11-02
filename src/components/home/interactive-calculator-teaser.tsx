@@ -45,19 +45,19 @@ export function InteractiveCalculatorTeaser() {
   const results = calculateSettlement();
 
   return (
-    <section className="py-20 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto text-center space-y-4 mb-12">
+    <section className="py-12 sm:py-16 lg:py-24 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto text-center space-y-4 mb-10 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
             <Calculator className="h-4 w-4" />
             <span>Interactive Debt Settlement Estimator</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             See How Much You Can Legally Save
           </h2>
 
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
             Based on RBI Fair Practices Code and historical settlements achieved across major
             Indian banks (HDFC, SBI, ICICI, Axis, Bajaj Finserv, Kotak, IDFC).
           </p>
@@ -65,7 +65,7 @@ export function InteractiveCalculatorTeaser() {
 
         <div className="max-w-4xl mx-auto rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12">
           {/* Controls Column */}
-          <div className="lg:col-span-7 p-6 sm:p-8 space-y-6">
+          <div className="lg:col-span-7 p-5 sm:p-8 space-y-6">
             {/* Debt Type Selector */}
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
@@ -110,7 +110,7 @@ export function InteractiveCalculatorTeaser() {
                 step={50000}
                 value={totalDebt}
                 onChange={(e) => setTotalDebt(Number(e.target.value))}
-                className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                className="w-full h-3.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary-600 my-1 py-1"
               />
               <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-500">
                 <span>₹1 Lakh</span>
@@ -138,7 +138,7 @@ export function InteractiveCalculatorTeaser() {
                 step={1}
                 value={overdueMonths}
                 onChange={(e) => setOverdueMonths(Number(e.target.value))}
-                className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                className="w-full h-3.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 my-1 py-1"
               />
               <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-500">
                 <span>1 Month</span>
@@ -159,7 +159,7 @@ export function InteractiveCalculatorTeaser() {
           </div>
 
           {/* Results Summary Column */}
-          <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 to-slate-950 text-white p-6 sm:p-8 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-800">
+          <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 to-slate-950 text-white p-5 sm:p-8 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-800">
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <span className="text-xs uppercase tracking-wider font-semibold text-slate-400">
