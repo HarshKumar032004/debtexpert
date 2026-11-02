@@ -11,6 +11,7 @@ import {
 import { siteConfig } from "@/config/site";
 import { blogPostsData } from "@/data/blogs";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations/motion-wrappers";
+import { BankEscalationFinder } from "@/components/services/bank-escalation-finder";
 
 export const metadata: Metadata = {
   title: "RBI Guidelines, Legal Guides & Debt Relief Blog | Debt Support Expert",
@@ -140,6 +141,11 @@ export default function BlogHubPage() {
             </StaggerItem>
           ))}
         </StaggerContainer>
+
+        {/* Official Bank Grievance & RBI Escalation Finder */}
+        <div className="max-w-5xl mx-auto mb-14 sm:mb-20">
+          <BankEscalationFinder />
+        </div>
 
         {/* Bottom Consultation Box */}
         <div className="max-w-4xl mx-auto rounded-3xl bg-slate-900 text-white p-5 sm:p-8 lg:p-10 text-center space-y-5 shadow-2xl">

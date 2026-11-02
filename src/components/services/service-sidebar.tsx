@@ -22,23 +22,48 @@ interface ServiceSidebarProps {
   customWhatsAppMessage?: string;
 }
 
+const ISSUE_PILLS = [
+  { id: "Personal Loan", label: "Personal Loan" },
+  { id: "Credit Card", label: "Credit Card" },
+  { id: "Recovery Harassment", label: "Recovery Harassment" },
+  { id: "Legal Notice / Sec 138", label: "Legal Notice / Sec 138" },
+  { id: "Multiple Loans", label: "Multiple Loans" },
+];
+
+const DEBT_TIERS = [
+  { id: "Below ₹1L", label: "< ₹1L" },
+  { id: "₹1L–₹3L", label: "1L–3L" },
+  { id: "₹3L–₹7L", label: "3L–7L" },
+  { id: "₹7L–₹15L", label: "7L–15L" },
+  { id: "₹15L+", label: "15L+" },
+];
+
 export function ServiceSidebar({
   serviceName,
   defaultLoanType = "personal-loan",
   customWhatsAppMessage,
 }: ServiceSidebarProps) {
-  const [formData, setFormData] = React.useState({
-    fullName: "",
-    phone: "",
-    city: "",
-    loanType: defaultLoanType,
-    totalDebt: "5L - 10L",
-    banks: "",
-    facingHarassment: true,
-  });
+  // Determine default issue from serviceName
+  const getInitialIssue = () => {
+    const s = serviceName.toLowerCase();
+    if (s.includes("credit card")) return "Credit Card";
+    if (s.includes("harassment")) return "Recovery Harassment";
+    if (s.includes("notice") || s.includes("138")) return "Legal Notice / Sec 138";
+    if (s.includes("multiple") || s.includes("restructuring")) return "Multiple Loans";
+    return "Personal Loan";
+  };
+
+  const [selectedIssue, setSelectedIssue] = React.useState(getInitialIssue());
+  const [selectedDebtTier, setSelectedDebtTier] = React.useState("₹3L–₹7L");
+  const [fullName, setFullName] = React.useState("");
+  const [phone, setPhone] = React.useState("");
+  const [city, setCity] = React.useState("");
+  const [consent, setConsent] = React.useState(true);
+  const [honeypot, setHoneypot] = React.useState("");
 
   const [status, setStatus] = React.useState<"idle" | "submitting" | "success">("idle");
   const [phoneError, setPhoneError] = React.useState<string | null>(null);
+  const [consentError, setConsentError] = React.useState<string | null>(null);
   const [modalData, setModalData] = React.useState({
     isOpen: false,
     referenceId: "",
@@ -48,8 +73,20 @@ export function ServiceSidebar({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneError(null);
+    setConsentError(null);
 
-    const validation = validateIndianPhone(formData.phone);
+    // Bot detection check
+    if (honeypot) {
+      setStatus("success");
+      return;
+    }
+
+    if (!consent) {
+      setConsentError("Please agree to let us contact you regarding your enquiry.");
+      return;
+    }
+
+    const validation = validateIndianPhone(phone);
     if (!validation.isValid) {
       setPhoneError(validation.error || "Please enter a valid 10-digit mobile number");
       return;
@@ -58,13 +95,11 @@ export function ServiceSidebar({
     setStatus("submitting");
 
     const result = await submitLead({
-      fullName: formData.fullName,
+      fullName,
       phone: validation.cleaned,
-      city: formData.city,
-      loanType: formData.loanType,
-      totalDebt: formData.totalDebt,
-      banks: formData.banks,
-      facingHarassment: formData.facingHarassment,
+      city,
+      loanType: selectedIssue,
+      totalDebt: selectedDebtTier,
       source: `service-sidebar: ${serviceName}`,
     });
 
@@ -90,7 +125,7 @@ export function ServiceSidebar({
     <aside className="space-y-6 sticky top-24">
       {/* 1. Quick Callback Request Form */}
       <div className="rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xl relative overflow-hidden backdrop-blur-md">
-        <div className="space-y-2 mb-6">
+        <div className="space-y-2 mb-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-950/70 border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 text-[11px] font-semibold">
             <Sparkles className="h-3 w-3 text-amber-500" />
             <span>Attorney-Client Privilege</span>
@@ -101,7 +136,7 @@ export function ServiceSidebar({
           </h3>
 
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Get an instant legal case review for <strong className="text-foreground font-semibold">{serviceName}</strong>. Our High Court advocates respond within 30-45 minutes.
+            Get an instant case evaluation for <strong className="text-foreground font-semibold">{serviceName}</strong>. Our advocates respond within 30-45 minutes.
           </p>
         </div>
 
@@ -121,8 +156,8 @@ export function ServiceSidebar({
                 Callback Confirmed!
               </h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Thank you, <span className="font-semibold text-foreground">{formData.fullName}</span>. An advocate handling {serviceName} will call you at{" "}
-                <span className="font-semibold text-foreground">+91 {formData.phone}</span> shortly.
+                Thank you, <span className="font-semibold text-foreground">{fullName}</span>. An advocate handling {serviceName} will call you at{" "}
+                <span className="font-semibold text-foreground">+91 {phone}</span> shortly.
               </p>
             </div>
 
@@ -132,7 +167,7 @@ export function ServiceSidebar({
                 <span>Next Immediate Step:</span>
               </div>
               <p>
-                Keep any bank legal notices or loan sanction letters ready. Do not make unverified payments to recovery callers.
+                Keep any bank legal notices or loan sanction letters ready. All settlement payments are made directly to your bank/NBFC.
               </p>
             </div>
 
@@ -159,7 +194,70 @@ export function ServiceSidebar({
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            {/* Honeypot field (hidden) */}
+            <input
+              type="text"
+              name="website"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              style={{ display: "none" }}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+
+            {/* 1. Issue Pills */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                1. Issue / Debt Category
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {ISSUE_PILLS.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSelectedIssue(item.id)}
+                    className={`py-1 px-2.5 rounded-lg text-[11px] font-semibold border transition-all ${
+                      selectedIssue === item.id
+                        ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                        : "border-border text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Debt Amount Tiers */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                  2. Outstanding Debt
+                </label>
+                <span className="font-extrabold text-primary text-xs">
+                  {selectedDebtTier}
+                </span>
+              </div>
+              <div className="grid grid-cols-5 gap-1 text-center">
+                {DEBT_TIERS.map((tier) => (
+                  <button
+                    key={tier.id}
+                    type="button"
+                    onClick={() => setSelectedDebtTier(tier.id)}
+                    className={`py-1.5 px-0.5 rounded-lg text-[10px] font-bold border transition-all ${
+                      selectedDebtTier === tier.id
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {tier.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Full Name */}
             <div className="space-y-1">
               <label
                 className="text-[11px] font-bold text-foreground uppercase tracking-wider"
@@ -172,20 +270,19 @@ export function ServiceSidebar({
                 type="text"
                 required
                 placeholder="e.g. Rajesh Kumar"
-                value={formData.fullName}
-                onChange={(e) =>
-                  setFormData({ ...formData, fullName: e.target.value })
-                }
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
             </div>
 
+            {/* 4. Mobile Number */}
             <div className="space-y-1">
               <label
                 className="text-[11px] font-bold text-foreground uppercase tracking-wider"
                 htmlFor="sidebar-phone"
               >
-                Mobile Number (WhatsApp Enabled) *
+                10-Digit Mobile (WhatsApp Enabled) *
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
@@ -197,9 +294,9 @@ export function ServiceSidebar({
                   inputMode="numeric"
                   required
                   placeholder="9876543210"
-                  value={formData.phone}
+                  value={phone}
                   onChange={(e) => {
-                    setFormData({ ...formData, phone: e.target.value });
+                    setPhone(e.target.value);
                     if (phoneError) setPhoneError(null);
                   }}
                   className={`w-full pl-11 pr-3 py-2.5 rounded-xl border bg-background text-foreground text-base sm:text-xs focus-visible:outline-none focus-visible:ring-2 ${
@@ -216,92 +313,47 @@ export function ServiceSidebar({
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label
-                  className="text-[11px] font-bold text-foreground uppercase tracking-wider"
-                  htmlFor="sidebar-city"
-                >
-                  City / State *
-                </label>
-                <input
-                  id="sidebar-city"
-                  type="text"
-                  required
-                  placeholder="e.g. Delhi, NCR"
-                  value={formData.city}
-                  onChange={(e) =>
-                    setFormData({ ...formData, city: e.target.value })
-                  }
-                  className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label
-                  className="text-[11px] font-bold text-foreground uppercase tracking-wider"
-                  htmlFor="sidebar-debt"
-                >
-                  Total Debt *
-                </label>
-                <select
-                  id="sidebar-debt"
-                  value={formData.totalDebt}
-                  onChange={(e) =>
-                    setFormData({ ...formData, totalDebt: e.target.value })
-                  }
-                  className="w-full px-2.5 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  <option value="Under 2 Lakh">Under ₹2 Lakh</option>
-                  <option value="2L - 5L">₹2L - ₹5 Lakh</option>
-                  <option value="5L - 10L">₹5L - ₹10 Lakh</option>
-                  <option value="10L - 25L">₹10L - ₹25 Lakh</option>
-                  <option value="25L - 50L">₹25L - ₹50 Lakh</option>
-                  <option value="50L+">₹50 Lakh+ (MSME)</option>
-                </select>
-              </div>
-            </div>
-
+            {/* 5. City */}
             <div className="space-y-1">
               <label
                 className="text-[11px] font-bold text-foreground uppercase tracking-wider"
-                htmlFor="sidebar-banks"
+                htmlFor="sidebar-city"
               >
-                Banks / NBFC Names (Optional)
+                City / Location *
               </label>
               <input
-                id="sidebar-banks"
+                id="sidebar-city"
                 type="text"
-                placeholder="e.g. HDFC, SBI, ICICI, Bajaj Finserv"
-                value={formData.banks}
-                onChange={(e) =>
-                  setFormData({ ...formData, banks: e.target.value })
-                }
-                className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                required
+                placeholder="e.g. Mumbai, Delhi, Bengaluru"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
             </div>
 
-            {/* Harassment Emergency Checkbox */}
-            <label
-              htmlFor="sidebar-harassment"
-              className="flex items-start gap-2.5 p-3 rounded-xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 cursor-pointer"
-            >
-              <input
-                id="sidebar-harassment"
-                type="checkbox"
-                checked={formData.facingHarassment}
-                onChange={(e) =>
-                  setFormData({ ...formData, facingHarassment: e.target.checked })
-                }
-                className="mt-0.5 h-3.5 w-3.5 rounded border-red-400 text-red-600 focus:ring-red-500"
-              />
-              <div className="text-[11px] text-slate-800 dark:text-slate-200 leading-tight">
-                <span className="font-bold text-red-600 dark:text-red-400 block">
-                  Priority Action:
+            {/* 6. Consent Checkbox */}
+            <div className="pt-0.5">
+              <label className="flex items-start gap-2 cursor-pointer text-[11px] text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => {
+                    setConsent(e.target.checked);
+                    if (e.target.checked) setConsentError(null);
+                  }}
+                  className="mt-0.5 rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                />
+                <span>
+                  I agree to receive case consultation updates from Debt Support Expert via call/WhatsApp.
                 </span>
-                Facing aggressive recovery calls, home visits, or threats to family.
-              </div>
-            </label>
+              </label>
+              {consentError && (
+                <p className="text-[10px] text-red-500 font-semibold pt-0.5">
+                  {consentError}
+                </p>
+              )}
+            </div>
 
             {/* Submit Button */}
             <button
@@ -323,7 +375,7 @@ export function ServiceSidebar({
 
             <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground pt-1">
               <Lock className="h-3 w-3 text-emerald-500" />
-              <span>Strict Confidentiality • No Data Sharing</span>
+              <span>Attorney-client privilege · Direct bank settlement</span>
             </div>
           </form>
         )}
@@ -398,11 +450,11 @@ export function ServiceSidebar({
         isOpen={modalData.isOpen}
         onClose={() => setModalData((prev) => ({ ...prev, isOpen: false }))}
         referenceId={modalData.referenceId}
-        clientName={formData.fullName}
-        phone={formData.phone}
+        clientName={fullName}
+        phone={phone}
         whatsappUrl={modalData.whatsappUrl}
-        city={formData.city}
-        totalDebt={formData.totalDebt}
+        city={city}
+        totalDebt={selectedDebtTier}
         category={serviceName}
       />
     </aside>

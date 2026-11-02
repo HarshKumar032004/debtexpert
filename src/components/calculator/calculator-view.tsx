@@ -354,28 +354,34 @@ export function CalculatorView() {
               </div>
             </div>
 
-            {/* Monthly Savings Roadmap */}
-            <div className="space-y-2.5 pt-2 border-t border-slate-800">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-primary-400" />
-                <span>Monthly Savings Roadmap</span>
+            {/* 3-Month Installment Breakdown */}
+            <div className="p-4 rounded-2xl bg-slate-800/70 border border-slate-700/80 space-y-2.5">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4 text-primary-400" />
+                  <span>3-Month Installment Breakdown</span>
+                </span>
+                <span className="text-[10px] text-emerald-400 font-semibold">Staged Payment</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-0.5">
-                  <div className="text-[10px] text-slate-400">3-Month Staged Plan</div>
-                  <div className="font-extrabold text-white text-sm">
-                    {formatINR(installment3Mo)} <span className="text-[10px] text-slate-400 font-normal">/ mo</span>
-                  </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+                  <span className="block text-[10px] uppercase font-bold text-slate-400">Month 1</span>
+                  <span className="block text-sm font-black text-white">{formatINR(Math.round(totalSettlement * 0.34))}</span>
                 </div>
-
-                <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-0.5">
-                  <div className="text-[10px] text-slate-400">6-Month Structured Plan</div>
-                  <div className="font-extrabold text-white text-sm">
-                    {formatINR(installment6Mo)} <span className="text-[10px] text-slate-400 font-normal">/ mo</span>
-                  </div>
+                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+                  <span className="block text-[10px] uppercase font-bold text-slate-400">Month 2</span>
+                  <span className="block text-sm font-black text-white">{formatINR(Math.round(totalSettlement * 0.33))}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+                  <span className="block text-[10px] uppercase font-bold text-slate-400">Month 3</span>
+                  <span className="block text-sm font-black text-white">{formatINR(totalSettlement - Math.round(totalSettlement * 0.34) - Math.round(totalSettlement * 0.33))}</span>
                 </div>
               </div>
+
+              <p className="text-[10px] text-slate-400 text-center">
+                Paid in 3 parts directly to bank/NBFC accounts upon receipt of formal OTS sanction letter.
+              </p>
             </div>
 
             {/* Minimum Due Comparison Trap */}
@@ -391,27 +397,32 @@ export function CalculatorView() {
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-8 flex flex-col sm:flex-row gap-3">
+          <div className="pt-6 flex flex-col sm:flex-row gap-3">
             <a
-              href="#consultation-form"
-              id="calculator-claim-plan-button"
-              className="flex-1 flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-xl shadow-emerald-950/50 transition-all active:scale-95 group"
+              href={`https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(
+                `Hello Debt Support Expert, I calculated my debt settlement:\n` +
+                `• Total Debt: ${formatINR(totalDebt)} across ${debts.length} account(s)\n` +
+                `• Hardship Reason: ${hardshipType}\n` +
+                `• Target Settlement: ${formatINR(totalSettlement)} (~${overallWaiverPct}% waiver, saving ${formatINR(totalSavings)})\n` +
+                `• 3-Part Plan: Month 1: ${formatINR(Math.round(totalSettlement * 0.34))}, Month 2: ${formatINR(Math.round(totalSettlement * 0.33))}, Month 3: ${formatINR(totalSettlement - Math.round(totalSettlement * 0.34) - Math.round(totalSettlement * 0.33))}\n` +
+                `Please review my file and connect me with a senior settlement advisor.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 py-4 px-5 rounded-2xl font-bold text-xs uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-950/50 transition-all active:scale-95 group text-center"
             >
-              <ShieldCheck className="h-5 w-5 text-amber-300" />
-              <span>Lock In This Legal Settlement Plan</span>
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              <MessageCircle className="h-4 w-4" />
+              <span>Send This Estimate to Advisor on WhatsApp</span>
             </a>
 
             <a
-              href={siteConfig.getWhatsAppUrl(
-                `Hello Debt Support Expert, I used your Debt Calculator and have ${formatINR(totalDebt)} across ${debts.length} loan accounts. My estimated settlement is ${formatINR(totalSettlement)} (saving ${formatINR(totalSavings)}). Please connect me with an advocate to review my OTS roadmap.`
-              )}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-all active:scale-95"
+              href="#consultation-form"
+              id="calculator-claim-plan-button"
+              className="inline-flex items-center justify-center gap-2 py-4 px-5 rounded-2xl font-bold text-xs uppercase tracking-wider text-slate-200 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 transition-all text-center"
             >
-              <MessageCircle className="h-4 w-4 fill-white/20" />
-              <span>WhatsApp Roadmap</span>
+              <ShieldCheck className="h-4 w-4 text-amber-300" />
+              <span>Lock In Legal Plan</span>
+              <ArrowRight className="h-4 w-4" />
             </a>
           </div>
         </div>

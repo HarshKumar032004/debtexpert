@@ -13,40 +13,149 @@ import {
   Send,
   CheckCircle2,
   Sparkles,
-  AlertOctagon,
   Scale,
   MessageCircle,
+  Calendar,
+  Video,
+  FileText,
+  UserCheck,
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { submitLead, validateIndianPhone } from "@/lib/lead";
 import { CaseInitiatedModal } from "@/components/forms/case-initiated-modal";
 
-export function ContactSplitLayout() {
-  const [formData, setFormData] = React.useState({
-    fullName: "",
-    phone: "",
-    email: "",
-    city: "",
-    totalDebt: "5L - 10L",
-    loanType: "personal-loan",
-    harassmentLevel: "critical",
-    banks: "",
-    message: "",
-  });
+const BANK_OPTIONS = [
+  "SBI",
+  "HDFC",
+  "ICICI",
+  "Axis",
+  "Kotak",
+  "Bajaj",
+  "IDFC",
+  "IndusInd",
+  "Credit Card/Loan Apps",
+  "Other",
+];
 
+const OVERDUE_STATUSES = [
+  "Not Overdue",
+  "1–3 Months",
+  "3–6 Months",
+  "6+ Months",
+];
+
+const PROBLEM_TAGS = [
+  "Harassment Calls",
+  "Home Visits",
+  "Legal Notice Received",
+  "High EMI Burden",
+];
+
+const CALLBACK_WINDOWS = [
+  "Morning 9–12",
+  "Afternoon 12–5",
+  "Anytime",
+];
+
+const CONSULTATION_MODES = [
+  { id: "Phone Call", label: "Phone Call", icon: PhoneCall },
+  { id: "WhatsApp Video", label: "WhatsApp Video", icon: MessageCircle },
+  { id: "Google Meet", label: "Google Meet", icon: Video },
+];
+
+const TIME_SLOTS = [
+  "10:00 AM – 11:00 AM",
+  "11:30 AM – 12:30 PM",
+  "2:00 PM – 3:00 PM",
+  "3:30 PM – 4:30 PM",
+];
+
+// Helper to get upcoming weekdays
+function getUpcomingWeekdays(count = 5): { dateStr: string; label: string; day: string }[] {
+  const result = [];
+  const current = new Date();
+  while (result.length < count) {
+    current.setDate(current.getDate() + 1);
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      // Mon to Fri
+      const dateStr = current.toISOString().split("T")[0];
+      const day = current.toLocaleDateString("en-IN", { weekday: "short" });
+      const label = current.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+      result.push({ dateStr, label, day });
+    }
+  }
+  return result;
+}
+
+export function ContactSplitLayout() {
+  const [activeTab, setActiveTab] = React.useState<"evaluation" | "consultation">("evaluation");
+
+  // Tab 1 State
+  const [evalName, setEvalName] = React.useState("");
+  const [evalPhone, setEvalPhone] = React.useState("");
+  const [evalEmail, setEvalEmail] = React.useState("");
+  const [evalCity, setEvalCity] = React.useState("");
+  const [selectedBanks, setSelectedBanks] = React.useState<string[]>(["SBI"]);
+  const [evalTotalDebt, setEvalTotalDebt] = React.useState("₹3L–₹7L");
+  const [evalOverdue, setEvalOverdue] = React.useState("1–3 Months");
+  const [selectedProblems, setSelectedProblems] = React.useState<string[]>(["Harassment Calls"]);
+  const [evalCallbackTime, setEvalCallbackTime] = React.useState("Morning 9–12");
+  const [evalConsent, setEvalConsent] = React.useState(true);
+
+  // Tab 2 State
+  const upcomingWeekdays = React.useMemo(() => getUpcomingWeekdays(5), []);
+  const [bookName, setBookName] = React.useState("");
+  const [bookPhone, setBookPhone] = React.useState("");
+  const [bookEmail, setBookEmail] = React.useState("");
+  const [bookMode, setBookMode] = React.useState("Phone Call");
+  const [bookDate, setBookDate] = React.useState(upcomingWeekdays[0]?.dateStr || "");
+  const [bookSlot, setBookSlot] = React.useState(TIME_SLOTS[0]);
+  const [bookConsent, setBookConsent] = React.useState(true);
+
+  // Honeypot
+  const [honeypot, setHoneypot] = React.useState("");
+
+  // Submission Status & Errors
   const [status, setStatus] = React.useState<"idle" | "submitting" | "success">("idle");
   const [phoneError, setPhoneError] = React.useState<string | null>(null);
+  const [consentError, setConsentError] = React.useState<string | null>(null);
   const [modalData, setModalData] = React.useState({
     isOpen: false,
     referenceId: "",
     whatsappUrl: "",
+    submittedName: "",
+    submittedPhone: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const toggleBank = (bank: string) => {
+    setSelectedBanks((prev) =>
+      prev.includes(bank) ? prev.filter((b) => b !== bank) : [...prev, bank]
+    );
+  };
+
+  const toggleProblem = (problem: string) => {
+    setSelectedProblems((prev) =>
+      prev.includes(problem) ? prev.filter((p) => p !== problem) : [...prev, problem]
+    );
+  };
+
+  const handleTab1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneError(null);
+    setConsentError(null);
 
-    const validation = validateIndianPhone(formData.phone);
+    if (honeypot) {
+      setStatus("success");
+      return;
+    }
+
+    if (!evalConsent) {
+      setConsentError("Please agree to receive case consultation updates.");
+      return;
+    }
+
+    const validation = validateIndianPhone(evalPhone);
     if (!validation.isValid) {
       setPhoneError(validation.error || "Please enter a valid 10-digit mobile number");
       return;
@@ -55,16 +164,15 @@ export function ContactSplitLayout() {
     setStatus("submitting");
 
     const result = await submitLead({
-      fullName: formData.fullName,
+      fullName: evalName,
       phone: validation.cleaned,
-      email: formData.email,
-      city: formData.city,
-      totalDebt: formData.totalDebt,
-      loanType: formData.loanType,
-      harassmentLevel: formData.harassmentLevel,
-      banks: formData.banks,
-      message: formData.message,
-      source: "contact-page",
+      email: evalEmail,
+      city: evalCity,
+      totalDebt: evalTotalDebt,
+      banks: selectedBanks.join(", "),
+      loanType: `Case Eval (Overdue: ${evalOverdue})`,
+      message: `Problems: ${selectedProblems.join(", ")} | Callback: ${evalCallbackTime}`,
+      source: "contact-case-evaluation",
     });
 
     setStatus("success");
@@ -74,13 +182,62 @@ export function ContactSplitLayout() {
         isOpen: true,
         referenceId: result.referenceId,
         whatsappUrl: result.whatsappUrl,
+        submittedName: evalName,
+        submittedPhone: validation.cleaned,
       });
     } else {
       setPhoneError(result.error || "Failed to submit case file.");
     }
   };
 
-  const whatsappUrl = siteConfig.getWhatsAppUrl(
+  const handleTab2Submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPhoneError(null);
+    setConsentError(null);
+
+    if (honeypot) {
+      setStatus("success");
+      return;
+    }
+
+    if (!bookConsent) {
+      setConsentError("Please agree to receive your consultation confirmation.");
+      return;
+    }
+
+    const validation = validateIndianPhone(bookPhone);
+    if (!validation.isValid) {
+      setPhoneError(validation.error || "Please enter a valid 10-digit mobile number");
+      return;
+    }
+
+    setStatus("submitting");
+
+    const result = await submitLead({
+      fullName: bookName,
+      phone: validation.cleaned,
+      email: bookEmail,
+      loanType: `1-on-1 Consultation (${bookMode})`,
+      message: `Scheduled Slot: ${bookDate} at ${bookSlot}`,
+      source: "contact-book-consultation",
+    });
+
+    setStatus("success");
+
+    if (result.success) {
+      setModalData({
+        isOpen: true,
+        referenceId: result.referenceId,
+        whatsappUrl: result.whatsappUrl,
+        submittedName: bookName,
+        submittedPhone: validation.cleaned,
+      });
+    } else {
+      setPhoneError(result.error || "Failed to book consultation.");
+    }
+  };
+
+  const directWhatsAppUrl = siteConfig.getWhatsAppUrl(
     "Hello Debt Support Expert, I need urgent legal assistance regarding recovery calls and loan settlement."
   );
 
@@ -94,17 +251,17 @@ export function ContactSplitLayout() {
         </div>
 
         <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15]">
-          Schedule Your Free Confidential Legal Case Evaluation
+          Connect with Verified Debt Settlement Advocates
         </h1>
 
         <p className="text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed">
-          Take immediate legal control of your financial distress. Submit your case details below or reach our emergency harassment legal helpline.
+          Request a full case audit or schedule a 1-on-1 legal consultation. 100% confidential, zero data sharing, and all settlement funds are paid directly to your bank/NBFC.
         </p>
       </div>
 
       {/* Split Screen Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start max-w-6xl mx-auto">
-        {/* Left Side: Helplines, WhatsApp, Emergency Badge & Office Hours (5 cols) */}
+        {/* Left Side: Verified Helplines, WhatsApp & Office Hours (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
           {/* Emergency Harassment Helpline Badge */}
           <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-br from-red-950/80 via-slate-900 to-slate-950 text-white border border-red-500/30 shadow-xl relative overflow-hidden">
@@ -125,16 +282,16 @@ export function ContactSplitLayout() {
               <div className="space-y-1">
                 <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-400" />
-                  <span>Facing Doorstep Agents or Threats?</span>
+                  <span>Facing Unlawful Threats or Home Visits?</span>
                 </h3>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  If recovery agents are at your home/office right now or threatening your family, call our emergency advocate line immediately. We intervene under the RBI August 2022 Circular within 30 minutes.
+                  Under the RBI Recovery Guidelines, collection agents cannot visit before 8 AM or after 7 PM, nor harass family or employers. Reach our emergency legal desk immediately.
                 </p>
               </div>
 
               <div className="pt-2">
                 <a
-                  href={`tel:${siteConfig.phone.replace(/[^0-9+]/g, "")}`}
+                  href={`tel:${siteConfig.phoneTel}`}
                   id="contact-emergency-call-button"
                   className="w-full inline-flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-red-600 hover:bg-red-500 shadow-md shadow-red-950 transition-all hover:scale-[1.02] active:scale-95 text-center"
                 >
@@ -145,10 +302,10 @@ export function ContactSplitLayout() {
             </div>
           </div>
 
-          {/* Standard Contact Channels Card */}
+          {/* Verified Business Contact Channels Card */}
           <div className="p-4 sm:p-7 rounded-3xl border border-border bg-card shadow-lg space-y-6">
             <h3 className="text-lg font-bold text-foreground">
-              Direct Contact Channels
+              Official Client Channels
             </h3>
 
             <div className="space-y-5 text-sm">
@@ -159,10 +316,10 @@ export function ContactSplitLayout() {
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground font-medium">
-                    National Client Helpline
+                    National Helpline & WhatsApp
                   </div>
                   <a
-                    href={`tel:${siteConfig.phone.replace(/[^0-9+]/g, "")}`}
+                    href={`tel:${siteConfig.phoneTel}`}
                     id="contact-general-phone"
                     className="text-base font-extrabold text-foreground hover:text-primary-600 transition-colors"
                   >
@@ -170,7 +327,7 @@ export function ContactSplitLayout() {
                   </a>
                   <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    <span>Mon – Sat: 9:30 AM to 7:00 PM IST</span>
+                    <span>{siteConfig.operatingHours}</span>
                   </div>
                 </div>
               </div>
@@ -182,110 +339,178 @@ export function ContactSplitLayout() {
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground font-medium">
-                    WhatsApp Direct Connect
+                    Instant WhatsApp Advisory
                   </div>
                   <a
-                    href={whatsappUrl}
+                    href={directWhatsAppUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     id="contact-whatsapp-direct"
                     className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1.5"
                   >
-                    <span>Message On-Duty Advocate</span>
+                    <span>Message Case Desk (+91 79797 89458)</span>
                   </a>
                   <div className="text-[11px] text-muted-foreground mt-0.5">
-                    Fast 15-minute response time
+                    Fast advocate response during IST working hours
                   </div>
                 </div>
               </div>
 
-              {/* Email Address */}
+              {/* Primary Email */}
               <div className="flex items-start gap-3.5">
                 <div className="h-10 w-10 rounded-xl bg-purple-50 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
                   <Mail className="h-5 w-5" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground font-medium">
-                    Notice Submission & Document Audits
+                    Primary Client Support
                   </div>
                   <a
                     href={`mailto:${siteConfig.email}`}
                     id="contact-email"
-                    className="text-sm sm:text-base font-bold text-foreground hover:text-primary-600 transition-colors"
+                    className="text-sm font-bold text-foreground hover:text-primary-600 transition-colors"
                   >
                     {siteConfig.email}
                   </a>
                   <div className="text-[11px] text-muted-foreground mt-0.5">
-                    Send bank legal notices & sanction letters for free review
+                    Case files, loan notices, and document verification
                   </div>
                 </div>
               </div>
 
-              {/* Physical Address */}
-              <div className="flex items-start gap-3.5 pt-3 border-t border-border">
+              {/* Grievance Email */}
+              <div className="flex items-start gap-3.5">
                 <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium">
+                    Grievance & Escalation Desk
+                  </div>
+                  <a
+                    href={`mailto:${siteConfig.emails.grievance}`}
+                    className="text-sm font-bold text-foreground hover:text-primary-600 transition-colors"
+                  >
+                    {siteConfig.emails.grievance}
+                  </a>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    Dedicated escalation officer oversight
+                  </div>
+                </div>
+              </div>
+
+              {/* Office Location */}
+              <div className="flex items-start gap-3.5 pt-3 border-t border-border">
+                <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
                   <MapPin className="h-5 w-5" />
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground font-medium">
-                    Corporate Headquarters
+                    Headquarters & Legal Chambers
                   </div>
                   <div className="text-xs font-semibold text-foreground leading-relaxed mt-0.5">
-                    Level 4, Cyber City, DLF Phase 2,<br />
-                    Gurugram, Haryana - 122002, India
+                    {siteConfig.address.street}, {siteConfig.address.city}, {siteConfig.address.state} - {siteConfig.address.postalCode}
                   </div>
                   <div className="text-[11px] text-muted-foreground mt-1">
-                    Pan-India Advocates: Delhi NCR, Mumbai, Bengaluru, Hyderabad, Chennai, Kolkata
+                    Pan-India Virtual Advocates across all 28 States & UTs
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Strict Privacy Reassurance */}
-          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-border space-y-2">
+          {/* Statutory Direct Lender Disclaimer */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-border space-y-1.5">
             <div className="flex items-center gap-2 text-xs font-bold text-foreground">
               <Lock className="h-4 w-4 text-emerald-500" />
-              <span>Zero Disclosure Guarantee</span>
+              <span>Direct Lender Settlement Guarantee</span>
             </div>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Your consultation is protected under Bar Council attorney-client privilege. We never disclose debt details to your employer, relatives, or third parties.
+              Debt Support Expert never collects settlement funds. 100% of agreed settlement amounts are paid directly by the borrower to their lending bank or NBFC via official branch or net-banking channels.
             </p>
           </div>
-        </div>        {/* Right Side: Comprehensive Case Evaluation Form (7 cols) */}
+        </div>
+
+        {/* Right Side: Modern Dual-Tab Form Card (7 cols) */}
         <div className="lg:col-span-7">
-          <div className="rounded-3xl border border-border bg-card p-4 sm:p-8 lg:p-10 shadow-xl relative overflow-hidden">
+          <div className="rounded-3xl border border-border bg-card p-4 sm:p-7 lg:p-8 shadow-xl relative overflow-hidden backdrop-blur-md">
+            {/* Honeypot field (hidden) */}
+            <input
+              type="text"
+              name="website"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              style={{ display: "none" }}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+
+            {/* Clean Tab Selector */}
+            <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-muted/60 mb-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("evaluation");
+                  setStatus("idle");
+                }}
+                className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  activeTab === "evaluation"
+                    ? "bg-card text-foreground shadow-md border border-border"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <FileText className="h-4 w-4 text-primary" />
+                <span>Case Evaluation</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("consultation");
+                  setStatus("idle");
+                }}
+                className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  activeTab === "consultation"
+                    ? "bg-card text-foreground shadow-md border border-border"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Calendar className="h-4 w-4 text-emerald-500" />
+                <span>Book 1-on-1 Call</span>
+              </button>
+            </div>
+
             {status === "success" ? (
-              <div className="py-8 sm:py-12 text-center space-y-6">
+              <div className="py-8 sm:py-10 text-center space-y-5">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="h-10 w-10" />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {modalData.referenceId && (
                     <div className="inline-block px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                      Official Case File #{modalData.referenceId}
+                      Official Case Ref #{modalData.referenceId}
                     </div>
                   )}
-                  <h3 className="text-2xl font-extrabold text-foreground">
-                    Case Evaluation Request Received
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-foreground">
+                    {activeTab === "evaluation"
+                      ? "Case File Successfully Registered!"
+                      : "Consultation Request Reserved!"}
                   </h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                    Thank you, <span className="font-semibold text-foreground">{formData.fullName}</span>. A Senior Legal Advocate has been assigned to your case portfolio and will contact you at{" "}
-                    <span className="font-semibold text-foreground">+91 {formData.phone}</span> within <strong className="text-emerald-600 dark:text-emerald-400">30-45 minutes</strong>.
+                  <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                    Thank you, <span className="font-semibold text-foreground">{modalData.submittedName}</span>. A senior advocate has been assigned to your case and will connect with you at{" "}
+                    <span className="font-semibold text-foreground">+91 {modalData.submittedPhone}</span>.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-300 space-y-2 max-w-md mx-auto text-left">
+                <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-300 space-y-1.5 max-w-md mx-auto text-left">
                   <div className="font-bold flex items-center gap-1.5">
                     <ShieldCheck className="h-4 w-4" />
-                    <span>Immediate Advocate Instructions:</span>
+                    <span>Next Immediate Step:</span>
                   </div>
-                  <ul className="space-y-1 list-disc pl-4 text-[11px] leading-relaxed">
-                    <li>Do not engage in verbal arguments with recovery agents or make unverified promises.</li>
-                    <li>If an agent calls, inform them that your advocates at Debt Support Expert are handling legal representation.</li>
-                    <li>Keep your loan account numbers, notices, or WhatsApp messages ready for our advocate to review.</li>
-                  </ul>
+                  <p className="text-[11px] leading-relaxed">
+                    Keep your loan account details and any recent bank demand notices handy. Do not make unverified cash or third-party payments to recovery callers.
+                  </p>
                 </div>
 
                 <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -297,297 +522,450 @@ export function ContactSplitLayout() {
                       className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-all active:scale-95"
                     >
                       <MessageCircle className="h-4 w-4" />
-                      <span>Connect on WhatsApp with Ref #{modalData.referenceId}</span>
+                      <span>Connect on WhatsApp (Ref #{modalData.referenceId})</span>
                     </a>
                   )}
-                  <a
-                    href={`tel:${siteConfig.phoneTel}`}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => setStatus("idle")}
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-xl font-bold text-xs text-muted-foreground hover:text-foreground border border-border"
                   >
-                    <PhoneCall className="h-4 w-4 text-emerald-400" />
-                    <span>Call Helpline: {siteConfig.phoneDisplay}</span>
-                  </a>
+                    Submit Another Query
+                  </button>
                 </div>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
-                <div className="space-y-2 pb-2 border-b border-border">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-950/70 border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 text-xs font-semibold">
-                    <Sparkles className="h-3 w-3 text-amber-500" />
-                    <span>Confidential Case Inquiry</span>
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-extrabold text-foreground">
-                    Request Legal Case Evaluation
-                  </h2>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Provide your debt details to receive an actionable legal assessment and customized OTS settlement roadmap.
+            ) : activeTab === "evaluation" ? (
+              /* TAB 1: COMPLETE CASE EVALUATION */
+              <form onSubmit={handleTab1Submit} className="space-y-4">
+                <div className="space-y-1 pb-1">
+                  <h3 className="text-lg font-extrabold text-foreground">
+                    Comprehensive Case Evaluation
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Fill in your debt and lender profile for an exact OTS savings estimate and advocate assignment.
                   </p>
                 </div>
 
-                {/* Name & Phone */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="contact-fullname"
-                      className="text-xs font-bold text-foreground"
-                    >
+                {/* Name & Mobile */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
                       Full Legal Name *
                     </label>
                     <input
-                      id="contact-fullname"
                       type="text"
                       required
                       placeholder="e.g. Vikramaditya Rathore"
-                      value={formData.fullName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, fullName: e.target.value })
-                      }
-                      className="w-full px-3.5 py-3 rounded-xl border border-input bg-background text-foreground text-base sm:text-sm focus:ring-2 focus:ring-primary outline-none"
+                      value={evalName}
+                      onChange={(e) => setEvalName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus:ring-2 focus:ring-primary outline-none"
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="contact-phone"
-                      className="text-xs font-bold text-foreground"
-                    >
-                      Mobile Number (WhatsApp Enabled) *
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                      10-Digit Mobile Number *
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm sm:text-xs font-semibold text-muted-foreground">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
                         +91
                       </span>
                       <input
-                        id="contact-phone"
                         type="tel"
                         inputMode="numeric"
                         required
                         placeholder="9876543210"
-                        value={formData.phone}
+                        value={evalPhone}
                         onChange={(e) => {
-                          setFormData({ ...formData, phone: e.target.value });
+                          setEvalPhone(e.target.value);
                           if (phoneError) setPhoneError(null);
                         }}
-                        className={`w-full pl-12 pr-3.5 py-3 rounded-xl border bg-background text-foreground text-base sm:text-sm focus:ring-2 outline-none ${
-                          phoneError
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-input focus:ring-primary"
+                        className={`w-full pl-11 pr-3 py-2.5 rounded-xl border bg-background text-foreground text-base sm:text-xs focus:ring-2 outline-none ${
+                          phoneError ? "border-red-500 focus:ring-red-500" : "border-input focus:ring-primary"
                         }`}
                       />
                     </div>
                     {phoneError && (
-                      <p className="text-[11px] text-red-500 font-semibold pt-0.5">
-                        {phoneError}
-                      </p>
+                      <p className="text-[10px] text-red-500 font-semibold">{phoneError}</p>
                     )}
                   </div>
                 </div>
 
-                {/* City & Email */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="contact-city"
-                      className="text-xs font-bold text-foreground"
-                    >
+                {/* Email & City */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                      Email Address (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="vikram@example.com"
+                      value={evalEmail}
+                      onChange={(e) => setEvalEmail(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
                       City / State *
                     </label>
                     <input
-                      id="contact-city"
                       type="text"
                       required
-                      placeholder="e.g. Bengaluru, Karnataka"
-                      value={formData.city}
-                      onChange={(e) =>
-                        setFormData({ ...formData, city: e.target.value })
-                      }
-                      className="w-full px-3.5 py-3 rounded-xl border border-input bg-background text-foreground text-base sm:text-sm focus:ring-2 focus:ring-primary outline-none"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="contact-email"
-                      className="text-xs font-bold text-foreground"
-                    >
-                      Email Address (For Confidential Notices)
-                    </label>
-                    <input
-                      id="contact-email"
-                      type="email"
-                      placeholder="vikram@example.com"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      className="w-full px-3.5 py-3 rounded-xl border border-input bg-background text-foreground text-base sm:text-sm focus:ring-2 focus:ring-primary outline-none"
+                      placeholder="e.g. Mumbai, Maharashtra"
+                      value={evalCity}
+                      onChange={(e) => setEvalCity(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus:ring-2 focus:ring-primary outline-none"
                     />
                   </div>
                 </div>
 
-                {/* Debt Category & Total Unsecured Debt */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="contact-loantype"
-                      className="text-xs font-bold text-foreground"
-                    >
-                      Primary Debt Category *
-                    </label>
-                    <select
-                      id="contact-loantype"
-                      value={formData.loanType}
-                      onChange={(e) =>
-                        setFormData({ ...formData, loanType: e.target.value })
-                      }
-                      className="w-full px-3.5 py-3 rounded-xl border border-input bg-background text-foreground text-base sm:text-sm focus:ring-2 focus:ring-primary outline-none"
-                    >
-                      <option value="personal-loan">Personal Loan (Bank / NBFC)</option>
-                      <option value="credit-card">Credit Card Debt</option>
-                      <option value="multiple-debts">Multiple Credit Cards & Loans</option>
-                      <option value="business-loan">MSME / Business Loan / OD</option>
-                      <option value="digital-apps">Digital Loan Apps</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="contact-totaldebt"
-                      className="text-xs font-bold text-foreground"
-                    >
-                      Total Unsecured Debt Amount *
-                    </label>
-                    <select
-                      id="contact-totaldebt"
-                      value={formData.totalDebt}
-                      onChange={(e) =>
-                        setFormData({ ...formData, totalDebt: e.target.value })
-                      }
-                      className="w-full px-3.5 py-3 rounded-xl border border-input bg-background text-foreground text-base sm:text-sm focus:ring-2 focus:ring-primary outline-none"
-                    >
-                      <option value="Under 2 Lakh">Under ₹2,00,000</option>
-                      <option value="2L - 5L">₹2,00,000 - ₹5,00,000</option>
-                      <option value="5L - 10L">₹5,00,000 - ₹10,00,000</option>
-                      <option value="10L - 25L">₹10,00,000 - ₹25,00,000</option>
-                      <option value="25L - 50L">₹25,00,000 - ₹50,00,000</option>
-                      <option value="50L+">₹50,00,000+ (Commercial / MSME)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Harassment Level Selector */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-foreground block">
-                    Current Recovery Harassment Level *
+                {/* Multi-Select Bank/NBFC Pills */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider flex justify-between">
+                    <span>Lending Banks / NBFCs (Select all that apply)</span>
+                    <span className="text-primary text-[10px] lowercase font-normal">
+                      {selectedBanks.length} selected
+                    </span>
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    {[
-                      {
-                        id: "mild",
-                        title: "Mild / Low",
-                        desc: "Occasional payment reminder calls",
-                        border: "border-slate-200 dark:border-slate-800",
-                        active: "border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300",
-                      },
-                      {
-                        id: "moderate",
-                        title: "Moderate",
-                        desc: "10-20 calls/day + threatening SMS notices",
-                        border: "border-amber-200 dark:border-amber-900/60",
-                        active: "border-amber-500 bg-amber-50/50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300",
-                      },
-                      {
-                        id: "critical",
-                        title: "Critical Emergency",
-                        desc: "30+ calls/day, calls to family/office, home visits",
-                        border: "border-red-200 dark:border-red-900/60",
-                        active: "border-red-500 bg-red-50/60 dark:bg-red-950/40 text-red-900 dark:text-red-300",
-                      },
-                    ].map((lvl) => (
+                  <div className="flex flex-wrap gap-1.5">
+                    {BANK_OPTIONS.map((bank) => {
+                      const isSelected = selectedBanks.includes(bank);
+                      return (
+                        <button
+                          key={bank}
+                          type="button"
+                          onClick={() => toggleBank(bank)}
+                          className={`py-1 px-2.5 rounded-lg text-[11px] font-semibold border transition-all ${
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                              : "border-border text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {isSelected ? `✓ ${bank}` : bank}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Total Outstanding Debt & Overdue Status */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                      Total Outstanding Debt *
+                    </label>
+                    <select
+                      value={evalTotalDebt}
+                      onChange={(e) => setEvalTotalDebt(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Below ₹1L">Below ₹1 Lakh</option>
+                      <option value="₹1L–₹3L">₹1L – ₹3 Lakh</option>
+                      <option value="₹3L–₹7L">₹3L – ₹7 Lakh</option>
+                      <option value="₹7L–₹15L">₹7L – ₹15 Lakh</option>
+                      <option value="₹15L+">₹15 Lakh+ (MSME / Multi-card)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                      Overdue Status *
+                    </label>
+                    <select
+                      value={evalOverdue}
+                      onChange={(e) => setEvalOverdue(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      {OVERDUE_STATUSES.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Current Problem Tags (Multi-select) */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                    Current Urgent Problem
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    {PROBLEM_TAGS.map((tag) => {
+                      const isSelected = selectedProblems.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => toggleProblem(tag)}
+                          className={`py-2 px-2 rounded-xl text-[10px] sm:text-[11px] font-semibold border text-center transition-all ${
+                            isSelected
+                              ? "border-red-500 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-bold"
+                              : "border-border text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {isSelected ? `✓ ${tag}` : tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Preferred Callback Time */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                    Preferred Callback Window
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CALLBACK_WINDOWS.map((win) => (
                       <button
-                        key={lvl.id}
+                        key={win}
                         type="button"
-                        onClick={() =>
-                          setFormData({ ...formData, harassmentLevel: lvl.id })
-                        }
-                        className={`p-3 rounded-xl border text-left transition-all ${
-                          formData.harassmentLevel === lvl.id
-                            ? `${lvl.active} ring-2 ring-primary/40 font-bold`
-                            : "border-border bg-slate-50/50 dark:bg-slate-900/30 text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                        onClick={() => setEvalCallbackTime(win)}
+                        className={`py-2 px-2 rounded-xl text-[11px] font-semibold border text-center transition-all ${
+                          evalCallbackTime === win
+                            ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                            : "border-border text-muted-foreground hover:bg-muted"
                         }`}
                       >
-                        <div className="text-xs font-bold text-foreground">
-                          {lvl.title}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
-                          {lvl.desc}
-                        </div>
+                        {win}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Banks / Lenders */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="contact-banks"
-                    className="text-xs font-bold text-foreground"
-                  >
-                    Banks / NBFC Names (Optional)
+                {/* Privacy Consent Checkbox */}
+                <div className="pt-1">
+                  <label className="flex items-start gap-2 cursor-pointer text-[11px] text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={evalConsent}
+                      onChange={(e) => {
+                        setEvalConsent(e.target.checked);
+                        if (e.target.checked) setConsentError(null);
+                      }}
+                      className="mt-0.5 rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                    />
+                    <span>
+                      I authorize Debt Support Expert advocates to review my file and contact me regarding debt resolution.
+                    </span>
                   </label>
-                  <input
-                    id="contact-banks"
-                    type="text"
-                    placeholder="e.g. HDFC, SBI Card, ICICI Bank, Bajaj Finserv, Axis Bank"
-                    value={formData.banks}
-                    onChange={(e) =>
-                      setFormData({ ...formData, banks: e.target.value })
-                    }
-                    className="w-full px-3.5 py-3 rounded-xl border border-input bg-background text-foreground text-base sm:text-sm focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-
-                {/* Message / Notice Details */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="contact-message"
-                    className="text-xs font-bold text-foreground"
-                  >
-                    Message / Notice Details (Optional)
-                  </label>
-                  <textarea
-                    id="contact-message"
-                    rows={3}
-                    placeholder="Describe your situation (e.g., received Section 138 notice, loan default duration, salary reduction, or medical emergency)..."
-                    value={formData.message}
-                    onChange={(e) =>
-                      setFormData({ ...formData, message: e.target.value })
-                    }
-                    className="w-full px-3.5 py-3 rounded-xl border border-input bg-background text-foreground text-base sm:text-sm focus:ring-2 focus:ring-primary outline-none resize-none"
-                  />
+                  {consentError && (
+                    <p className="text-[10px] text-red-500 font-semibold pt-0.5">{consentError}</p>
+                  )}
                 </div>
 
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  id="contact-submit-button"
                   disabled={status === "submitting"}
-                  className="w-full py-3.5 sm:py-4 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 hover:from-primary-700 hover:to-blue-800 shadow-lg shadow-primary-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
+                  className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 hover:from-primary-700 hover:to-blue-800 shadow-lg shadow-primary-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
                 >
                   {status === "submitting" ? (
-                    <span>Submitting Case to Senior Advocates...</span>
+                    <span>Initiating Official Case File...</span>
                   ) : (
                     <>
-                      <ShieldCheck className="h-5 w-5 text-amber-300" />
-                      <span>Submit Case for Legal Evaluation & Harassment Relief</span>
+                      <ShieldCheck className="h-4 w-4 text-amber-300" />
+                      <span>Submit Case for Legal Evaluation</span>
                       <Send className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
                 </button>
 
-                <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground pt-1">
-                  <Lock className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Protected under Bar Council Attorney-Client Privilege. Zero spam guaranteed.</span>
+                <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground pt-1">
+                  <Lock className="h-3 w-3 text-emerald-500" />
+                  <span>Strict Confidentiality • No Data Sharing • Direct Lender Settlement</span>
+                </div>
+              </form>
+            ) : (
+              /* TAB 2: BOOK 1-ON-1 CONSULTATION CALL/MEET */
+              <form onSubmit={handleTab2Submit} className="space-y-4">
+                <div className="space-y-1 pb-1">
+                  <h3 className="text-lg font-extrabold text-foreground">
+                    Book 1-on-1 Legal Consultation
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Schedule a private advisory session with a senior advocate (Monday to Friday, 9 AM – 5 PM IST).
+                  </p>
+                </div>
+
+                {/* Name & Mobile */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                      Full Legal Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Ananya Sharma"
+                      value={bookName}
+                      onChange={(e) => setBookName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                      10-Digit Mobile Number *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
+                        +91
+                      </span>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        required
+                        placeholder="9876543210"
+                        value={bookPhone}
+                        onChange={(e) => {
+                          setBookPhone(e.target.value);
+                          if (phoneError) setPhoneError(null);
+                        }}
+                        className={`w-full pl-11 pr-3 py-2.5 rounded-xl border bg-background text-foreground text-base sm:text-xs focus:ring-2 outline-none ${
+                          phoneError ? "border-red-500 focus:ring-red-500" : "border-input focus:ring-primary"
+                        }`}
+                      />
+                    </div>
+                    {phoneError && (
+                      <p className="text-[10px] text-red-500 font-semibold">{phoneError}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Optional Email for Calendar Invite */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                    Email Address (For Calendar Invite & Meeting Link)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="ananya@example.com"
+                    value={bookEmail}
+                    onChange={(e) => setBookEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-foreground text-base sm:text-xs focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
+
+                {/* Consultation Mode */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                    Preferred Consultation Mode *
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CONSULTATION_MODES.map((item) => {
+                      const Icon = item.icon;
+                      const isSelected = bookMode === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setBookMode(item.id)}
+                          className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                              : "border-border text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <Icon className={`h-4 w-4 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                          <span className="text-[11px]">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Weekday Date Picker (Next 5 Weekdays) */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                    Select Consultation Day (Mon–Fri) *
+                  </label>
+                  <div className="grid grid-cols-5 gap-1.5 text-center">
+                    {upcomingWeekdays.map((item) => (
+                      <button
+                        key={item.dateStr}
+                        type="button"
+                        onClick={() => setBookDate(item.dateStr)}
+                        className={`py-2 px-1 rounded-xl border transition-all ${
+                          bookDate === item.dateStr
+                            ? "border-primary bg-primary text-primary-foreground font-bold shadow-sm"
+                            : "border-border text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <span className="block text-[10px] uppercase font-semibold opacity-80">{item.day}</span>
+                        <span className="block text-xs font-bold">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Time Slot */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                    Select Time Slot (IST) *
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TIME_SLOTS.map((slot) => (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => setBookSlot(slot)}
+                        className={`py-2.5 px-3 rounded-xl text-xs font-semibold border text-center transition-all ${
+                          bookSlot === slot
+                            ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                            : "border-border text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {slot}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Privacy Consent Checkbox */}
+                <div className="pt-1">
+                  <label className="flex items-start gap-2 cursor-pointer text-[11px] text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={bookConsent}
+                      onChange={(e) => {
+                        setBookConsent(e.target.checked);
+                        if (e.target.checked) setConsentError(null);
+                      }}
+                      className="mt-0.5 rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                    />
+                    <span>
+                      I confirm this slot reservation and agree to receive joining details via WhatsApp/SMS.
+                    </span>
+                  </label>
+                  {consentError && (
+                    <p className="text-[10px] text-red-500 font-semibold pt-0.5">{consentError}</p>
+                  )}
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={status === "submitting"}
+                  className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
+                >
+                  {status === "submitting" ? (
+                    <span>Securing Advocate Slot...</span>
+                  ) : (
+                    <>
+                      <UserCheck className="h-4 w-4 text-amber-300" />
+                      <span>Confirm 1-on-1 Consultation Call</span>
+                      <Send className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground pt-1">
+                  <Lock className="h-3 w-3 text-emerald-500" />
+                  <span>Confidential Advocate Session • No Advance Consultation Charges</span>
                 </div>
               </form>
             )}
@@ -600,12 +978,12 @@ export function ContactSplitLayout() {
         isOpen={modalData.isOpen}
         onClose={() => setModalData((prev) => ({ ...prev, isOpen: false }))}
         referenceId={modalData.referenceId}
-        clientName={formData.fullName}
-        phone={formData.phone}
+        clientName={modalData.submittedName}
+        phone={modalData.submittedPhone}
         whatsappUrl={modalData.whatsappUrl}
-        city={formData.city}
-        totalDebt={formData.totalDebt}
-        category={formData.loanType}
+        city={evalCity}
+        totalDebt={evalTotalDebt}
+        category={activeTab === "evaluation" ? "Case Evaluation" : "1-on-1 Consultation"}
       />
     </div>
   );

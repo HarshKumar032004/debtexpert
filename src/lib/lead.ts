@@ -76,9 +76,12 @@ export function validateIndianPhone(input: string): {
  * Example: DSE-2026-8492
  */
 export function generateReferenceId(): string {
-  const year = new Date().getFullYear();
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  return `DSE-${year}-${randomSuffix}`;
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let suffix = "";
+  for (let i = 0; i < 6; i++) {
+    suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `DSE-${suffix}`;
 }
 
 /**
@@ -188,7 +191,7 @@ export async function submitLead(data: LeadData): Promise<LeadResponse> {
   )}`;
 
   try {
-    const res = await fetch("/api/lead", {
+    const res = await fetch("/api/leads", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -201,7 +204,7 @@ export async function submitLead(data: LeadData): Promise<LeadResponse> {
     }
   } catch (err) {
     // We log but do not block the user from proceeding to WhatsApp
-    console.error("Error submitting lead to /api/lead:", err);
+    console.error("Error submitting lead to /api/leads:", err);
   }
 
   return {

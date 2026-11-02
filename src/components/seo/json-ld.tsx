@@ -36,10 +36,9 @@ export function OrganizationJsonLd() {
           "Wednesday",
           "Thursday",
           "Friday",
-          "Saturday",
         ],
-        opens: "09:30",
-        closes: "19:00",
+        opens: "09:00",
+        closes: "17:00",
       },
     ],
     sameAs: [

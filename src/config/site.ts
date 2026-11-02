@@ -14,26 +14,41 @@ export const siteConfig = {
   url: "https://debtsupportexpert.com",
   ogImage: "https://debtsupportexpert.com/og-image.jpg",
   description:
-    "India's Premier Legal Advisory & Loan Settlement Consultancy. Legally protect yourself against recovery agent harassment and settle personal loans, credit cards, and business debts with up to 50%-75% waiver under RBI guidelines.",
-  // Primary Client Contact
-  phone: "+91 98765 43210",
-  phoneDisplay: "+91 98765 43210",
-  phoneTel: "+919876543210",
+    "India's Premier Legal Advisory & Loan Settlement Consultancy. Legally protect yourself against recovery agent harassment and negotiate One-Time Settlement (OTS) for personal loans, credit cards, and business debts under RBI compromise guidelines.",
+
+  // Primary Client Contact (Verified live credentials)
+  phone: "+91 79797 89458",
+  phoneDisplay: "+91 79797 89458",
+  phoneTel: "+917979789458",
+  phoneE164: "917979789458",
+
   // Priority / Emergency Harassment Helpline
-  emergencyPhone: "+91 98765 43211",
-  emergencyPhoneDisplay: "+91 98765 43211",
-  emergencyPhoneTel: "+919876543211",
+  emergencyPhone: "+91 79797 89458",
+  emergencyPhoneDisplay: "+91 79797 89458",
+  emergencyPhoneTel: "+917979789458",
+
   // WhatsApp Configuration
-  whatsappNumber: "919876543210",
+  whatsappNumber: "917979789458",
   whatsappMessage:
-    "Hello Debt Support Expert, I need urgent legal assistance with loan settlement and recovery calls.",
+    "Hello Debt Support Expert, I need legal assistance with loan settlement and recovery calls.",
   getWhatsAppUrl(customMessage?: string): string {
     const text = customMessage || this.whatsappMessage;
     return `https://wa.me/${this.whatsappNumber}?text=${encodeURIComponent(text)}`;
   },
-  // Official Corporate Email
+
+  // Official Corporate Emails
   email: "support@debtsupportexpert.com",
-  legalEmail: "advocates@debtsupportexpert.com",
+  infoEmail: "info@debtsupportexpert.com",
+  grievanceEmail: "grievance@debtsupportexpert.com",
+  financeEmail: "finance@debtsupportexpert.com",
+  legalEmail: "support@debtsupportexpert.com",
+  emails: {
+    primary: "support@debtsupportexpert.com",
+    info: "info@debtsupportexpert.com",
+    grievance: "grievance@debtsupportexpert.com",
+    finance: "finance@debtsupportexpert.com",
+  },
+
   // Corporate Head Office Address
   address: {
     street: "Level 4, Cyber City, DLF Phase 2",
@@ -44,8 +59,21 @@ export const siteConfig = {
   },
   formattedAddress:
     "Level 4, Cyber City, DLF Phase 2, Gurugram, Haryana - 122002, India",
-  operatingHours: "Mon - Sat: 9:30 AM - 7:00 PM IST",
-  emergencyHours: "24/7 Immediate Anti-Harassment Dispatch",
+
+  // Operating Hours (Monday – Friday, 9:00 AM – 5:00 PM IST)
+  operatingHours: "Monday – Friday, 9:00 AM – 5:00 PM IST",
+  operatingHoursShort: "Mon–Fri, 9:00 AM–5:00 PM IST",
+  emergencyHours: "Mon–Fri, 9:00 AM – 5:00 PM IST",
+
+  // Statutory Disclaimers
+  disclaimers: {
+    consultancy:
+      "Debt Support Expert is a loan settlement consultancy. We do not issue loans, credit cards, or refinancing. We are not a lender, NBFC, or bank.",
+    directPayment:
+      "All settlement funds must be paid directly by the borrower to their lending bank or NBFC through official banking channels. We never collect or escrow client settlement funds.",
+    waiverAuthority:
+      "Settlement approvals, waiver amounts, and payment schedules are strictly at the sole discretion of the lending bank/NBFC under its internal board-approved policy.",
+  },
 
   services: [
     {
@@ -54,7 +82,7 @@ export const siteConfig = {
       href: "/services/personal-loan-settlement",
       description:
         "Negotiate One-Time Settlement (OTS) for unsecured bank & NBFC personal loans with legal safeguards.",
-      badge: "Save Up to 70%",
+      badge: "RBI Compliant OTS",
       features: [
         "RBI Fair Practices compliant",
         "Stop recovery harassment",
@@ -80,7 +108,7 @@ export const siteConfig = {
       href: "/services/anti-harassment",
       description:
         "Immediate legal intervention against abusive recovery agents, unauthorized calls, and home visits.",
-      badge: "RBI Compliant",
+      badge: "8 AM - 7 PM Law",
       features: [
         "Formal Legal Notices to Bank Grievance Cells",
         "Enforcement of RBI Recovery Agent Guidelines 2022",
@@ -101,18 +129,22 @@ export const siteConfig = {
       ],
     },
   ] as ServiceItem[],
+
   navLinks: [
     { title: "Home", href: "/" },
     { title: "Services", href: "/services", hasDropdown: true },
-    { title: "Settlement Calculator", href: "/calculator", badge: "Free" },
-    { title: "About Our Lawyers", href: "/about" },
-    { title: "RBI Guides & Blog", href: "/blog" },
+    { title: "How It Works", href: "/how-it-works" },
+    { title: "Settlement Calculator", href: "/calculator", badge: "Live" },
+    { title: "Pricing", href: "/pricing", badge: "Transparent" },
+    { title: "About Our Advocates", href: "/about" },
+    { title: "Legal Guides", href: "/blog" },
     { title: "Contact Us", href: "/contact" },
   ],
+
   stats: [
-    { value: "₹45+ Cr", label: "Debt Settled & Waived" },
+    { value: "₹45+ Cr", label: "Debt Negotiated & Settled" },
     { value: "12,500+", label: "Clients Protected from Harassment" },
-    { value: "50% - 75%", label: "Average Settlement Savings" },
-    { value: "100%", label: "Legal & RBI Compliant Process" },
+    { value: "100%", label: "Direct-to-Bank Payment Security" },
+    { value: "100%", label: "RBI Circular Compliance" },
   ],
 };

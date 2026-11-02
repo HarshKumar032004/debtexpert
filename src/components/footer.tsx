@@ -100,7 +100,7 @@ export function Footer() {
                   href={`tel:${siteConfig.phone.replace(/[^0-9+]/g, "")}`}
                   className="hover:text-white transition-colors"
                 >
-                  {siteConfig.phoneDisplay} (Mon-Sat, 9:30 AM - 7:00 PM)
+                  {siteConfig.phoneDisplay} ({siteConfig.operatingHours})
                 </a>
               </div>
               <div className="flex items-center gap-2">
@@ -170,6 +170,17 @@ export function Footer() {
               Resources & Tools
             </h4>
             <ul className="space-y-2.5 text-sm">
+              <li>
+                <Link
+                  href="/pricing"
+                  className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <span>Advisory Plans & Fees</span>
+                  <span className="text-[10px] px-1 rounded bg-primary-950 text-primary-400 border border-primary-800">
+                    Transparent
+                  </span>
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/calculator"
@@ -296,6 +307,9 @@ export function Footer() {
             case outcomes and do not constitute a universal guarantee. Debt settlement may reflect on
             CIBIL / credit bureau reports as &apos;Settled&apos; or &apos;Written Off&apos; as mandated by credit reporting
             regulations.
+          </p>
+          <p className="text-slate-400 font-medium">
+            Direct Settlement Payment Guarantee: 100% of all negotiated settlement funds are paid directly by the borrower to their lending bank or NBFC via official branch or net-banking channels upon receipt of a formal settlement/sanction letter. Debt Support Expert never collects, holds, or escrows client settlement funds. Final waiver terms and concession percentages depend strictly on the lender&apos;s board-approved compromise policy.
           </p>
         </div>
 

@@ -11,26 +11,44 @@ import {
   PhoneCall,
   Sparkles,
   MessageCircle,
-  FileCheck2,
   Lock,
-  Send,
   TrendingDown,
   AlertCircle,
+  FileCheck2,
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { formatINR } from "@/lib/utils";
 import { AnimatedCounter } from "@/components/animations/motion-wrappers";
 import { submitLead, validateIndianPhone } from "@/lib/lead";
-import { CaseInitiatedModal } from "@/components/forms/case-initiated-modal";
+
+const ISSUE_PILLS = [
+  { id: "personal", label: "Personal Loan" },
+  { id: "credit-card", label: "Credit Card" },
+  { id: "harassment", label: "Recovery Harassment" },
+  { id: "legal-notice", label: "Legal Notice / Sec 138" },
+  { id: "multiple", label: "Multiple Loans" },
+];
+
+const DEBT_TIERS = [
+  { id: "lt_1l", label: "Below ₹1L", amount: 80000 },
+  { id: "1_3l", label: "₹1L–₹3L", amount: 200000 },
+  { id: "3_7l", label: "₹3L–₹7L", amount: 500000 },
+  { id: "7_15l", label: "₹7L–₹15L", amount: 1000000 },
+  { id: "15l_plus", label: "₹15L+", amount: 2000000 },
+];
 
 export function HeroSection() {
-  // Mini eligibility form state
-  const [loanType, setLoanType] = React.useState("personal");
-  const [debtAmount, setDebtAmount] = React.useState(1200000);
-  const [emiStatus, setEmiStatus] = React.useState("overdue-3-6");
+  // Enhanced quick form state
+  const [selectedIssue, setSelectedIssue] = React.useState("personal");
+  const [selectedDebtTier, setSelectedDebtTier] = React.useState("3_7l");
   const [fullName, setFullName] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  const [city, setCity] = React.useState("");
+  const [consent, setConsent] = React.useState(true);
+  const [honeypot, setHoneypot] = React.useState("");
+
   const [phoneError, setPhoneError] = React.useState<string | null>(null);
+  const [consentError, setConsentError] = React.useState<string | null>(null);
   const [submitted, setSubmitted] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [modalData, setModalData] = React.useState({
@@ -39,15 +57,44 @@ export function HeroSection() {
     whatsappUrl: "",
   });
 
-  const whatsappUrl = siteConfig.getWhatsAppUrl();
+  const activeDebtAmount =
+    DEBT_TIERS.find((t) => t.id === selectedDebtTier)?.amount || 500000;
+  const activeDebtLabel =
+    DEBT_TIERS.find((t) => t.id === selectedDebtTier)?.label || "₹3L–₹7L";
+  const activeIssueLabel =
+    ISSUE_PILLS.find((i) => i.id === selectedIssue)?.label || "Personal Loan";
+
+  // Indicative calculation based on board-approved policy benchmarks
+  const estimatedWaiverPct =
+    selectedIssue === "credit-card"
+      ? 60
+      : selectedIssue === "legal-notice"
+      ? 50
+      : 55;
+  const estimatedSettlement = Math.round(
+    activeDebtAmount * (1 - estimatedWaiverPct / 100)
+  );
+  const estimatedSavings = activeDebtAmount - estimatedSettlement;
+  const estimatedInstallment = Math.round(estimatedSettlement / 3);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneError(null);
+    setConsentError(null);
+
+    // Honeypot check
+    if (honeypot) return;
+
+    if (!consent) {
+      setConsentError("Please tick the consent box to proceed.");
+      return;
+    }
 
     const validation = validateIndianPhone(phone);
     if (!validation.isValid) {
-      setPhoneError(validation.error || "Please enter a valid 10-digit mobile number");
+      setPhoneError(
+        validation.error || "Please enter a valid 10-digit Indian mobile number"
+      );
       return;
     }
 
@@ -56,10 +103,12 @@ export function HeroSection() {
     const result = await submitLead({
       fullName,
       phone: validation.cleaned,
-      totalDebt: `${formatINR(debtAmount)} (Status: ${emiStatus})`,
-      loanType,
-      source: "hero-mini-form",
-      facingHarassment: emiStatus !== "regular",
+      city: city || "India",
+      totalDebt: activeDebtLabel,
+      loanType: activeIssueLabel,
+      source: "hero-quick-form",
+      facingHarassment:
+        selectedIssue === "harassment" || selectedIssue === "legal-notice",
     });
 
     setLoading(false);
@@ -72,14 +121,13 @@ export function HeroSection() {
       });
       setSubmitted(true);
     } else {
-      setPhoneError(result.error || "Failed to submit case file. Please try again.");
+      setPhoneError(
+        result.error || "Failed to submit case file. Please try again."
+      );
     }
   };
 
-  // Estimated waiver computation
-  const estimatedWaiverPct = emiStatus === "overdue-6-plus" ? 68 : emiStatus === "overdue-3-6" ? 60 : 50;
-  const estimatedSettlement = Math.round(debtAmount * (1 - estimatedWaiverPct / 100));
-  const estimatedSavings = debtAmount - estimatedSettlement;
+  const whatsappDirectUrl = siteConfig.getWhatsAppUrl();
 
   return (
     <section className="relative overflow-hidden pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-24 hero-gradient-light dark:hero-gradient-dark border-b border-slate-200/60 dark:border-slate-800/60">
@@ -112,40 +160,38 @@ export function HeroSection() {
 
             {/* Empathetic Subheadline */}
             <p className="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-              Struggling with unmanageable personal loans or credit card debt? Our empanelled High
-              Court advocates protect you from aggressive recovery agent intimidation and legally
-              negotiate One-Time Settlements (OTS) to{" "}
-              <strong className="text-slate-900 dark:text-white">reduce your debt burden by up to 50% - 70%</strong>{" "}
-              with official bank No Dues Certificates (NDC).
+              Struggling with unmanageable personal loans or credit card debt? Our
+              empanelled High Court advocates protect you from unlawful recovery agent
+              intimidation and legally negotiate One-Time Settlements (OTS) under
+              official bank compromise policies with authentic No Dues Certificates (NDC).
             </p>
 
-            {/* Dual CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+            {/* Direct Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
               <a
                 href="#eligibility-form"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 hover:from-primary-700 hover:to-blue-800 shadow-lg shadow-primary-600/30 hover:shadow-xl hover:shadow-primary-600/40 transition-all duration-200 group active:scale-95"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 active:scale-95 transition-all text-center flex items-center justify-center gap-2"
               >
-                <Sparkles className="h-5 w-5 text-amber-300" />
-                <span>Get Free Debt Evaluation</span>
-                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                <span>Free Case Evaluation</span>
+                <ArrowRight className="h-4 w-4" />
               </a>
 
               <a
-                href={whatsappUrl}
+                href={whatsappDirectUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-base font-semibold text-emerald-700 dark:text-emerald-400 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-800/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-all shadow-sm active:scale-95"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-all text-center flex items-center justify-center gap-2"
               >
-                <MessageCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400 fill-emerald-600/20" />
-                <span>Talk to Legal Expert on WhatsApp</span>
+                <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>WhatsApp an Advocate</span>
               </a>
             </div>
 
-            {/* Trust Bullet List */}
-            <div className="pt-2 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+            {/* Trust Badges Row */}
+            <div className="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 border-t border-slate-200/60 dark:border-slate-800/60">
               <div className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span>Cease & Desist Notices in 24h</span>
+                <span>RBI Recovery Rules (8 AM–7 PM)</span>
               </div>
               <div className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -158,7 +204,7 @@ export function HeroSection() {
             </div>
           </motion.div>
 
-          {/* Right Column: Interactive Quick Eligibility Form with Floating Animated Badges */}
+          {/* Right Column: Interactive Quick Eligibility Form */}
           <div className="lg:col-span-5 relative" id="eligibility-form">
             {/* Floating Shield Badge Animation */}
             <motion.div
@@ -190,13 +236,13 @@ export function HeroSection() {
               className="hidden sm:flex absolute -bottom-5 -left-4 z-20 items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-xl border border-emerald-400/50 backdrop-blur-md"
             >
               <TrendingDown className="h-4 w-4 text-white" />
-              <span>Save ~{estimatedWaiverPct}% on Debt</span>
+              <span>Direct Bank Payment</span>
             </motion.div>
 
             {/* Outer decorative glow */}
             <div className="absolute -inset-1.5 bg-gradient-to-r from-blue-600 via-primary-600 to-emerald-500 rounded-3xl blur-xl opacity-25 dark:opacity-35 -z-10 animate-pulseGlow" />
 
-            {/* Main Interactive Eligibility Card */}
+            {/* Main Interactive Glassmorphic Eligibility Card */}
             <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-4 sm:p-6 lg:p-7 shadow-2xl relative">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
@@ -240,11 +286,11 @@ export function HeroSection() {
                       </h4>
                       <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xs mx-auto">
                         Thank you, <span className="font-semibold text-slate-900 dark:text-white">{fullName}</span>.
-                        Estimated Settlement: <strong className="text-emerald-600 dark:text-emerald-400">{formatINR(estimatedSettlement)}</strong> (Saving {formatINR(estimatedSavings)}).
+                        Estimated Settlement: <strong className="text-emerald-600 dark:text-emerald-400">{formatINR(estimatedSettlement)}</strong> (Payable in ~3 installments of {formatINR(estimatedInstallment)}).
                       </p>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Our Senior Advocate will contact you at <strong className="text-slate-900 dark:text-white">+91 {phone}</strong> shortly to halt recovery calls.
+                      Our advocate team will contact you at <strong className="text-slate-900 dark:text-white">+91 {phone}</strong> shortly.
                     </p>
                     <div className="pt-2 flex flex-col gap-2">
                       {modalData.whatsappUrl && (
@@ -268,26 +314,32 @@ export function HeroSection() {
                     </div>
                   </motion.div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-                    {/* 1. Loan Category */}
+                  <form onSubmit={handleSubmit} className="space-y-3.5 pt-4">
+                    {/* Honeypot field (hidden) */}
+                    <input
+                      type="text"
+                      name="website"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      style={{ display: "none" }}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+
+                    {/* 1. Interactive Issue Pills */}
                     <div className="space-y-1.5">
                       <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                        1. Loan Category
+                        1. Primary Debt Concern
                       </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-center">
-                        {[
-                          { id: "personal", label: "Personal" },
-                          { id: "credit-card", label: "Cards" },
-                          { id: "multiple", label: "Multiple" },
-                          { id: "business", label: "Business" },
-                        ].map((item) => (
+                      <div className="flex flex-wrap gap-1.5">
+                        {ISSUE_PILLS.map((item) => (
                           <button
                             key={item.id}
                             type="button"
-                            onClick={() => setLoanType(item.id)}
-                            className={`py-2 px-1 rounded-lg text-xs font-semibold border transition-all ${
-                              loanType === item.id
-                                ? "border-primary-600 bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300 dark:border-primary-500"
+                            onClick={() => setSelectedIssue(item.id)}
+                            className={`py-1.5 px-2.5 rounded-lg text-[11px] font-semibold border transition-all ${
+                              selectedIssue === item.id
+                                ? "border-primary-600 bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300 dark:border-primary-500 shadow-sm"
                                 : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                             }`}
                           >
@@ -297,51 +349,36 @@ export function HeroSection() {
                       </div>
                     </div>
 
-                    {/* 2. Total Debt Amount Slider */}
+                    {/* 2. Total Debt Amount Selector */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between items-center text-xs">
                         <label className="font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 text-[11px]">
-                          2. Total Unsecured Debt
+                          2. Total Outstanding Debt
                         </label>
-                        <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">
-                          {formatINR(debtAmount)}
+                        <span className="font-extrabold text-primary-600 dark:text-primary-400 text-xs">
+                          {activeDebtLabel}
                         </span>
                       </div>
-                      <input
-                        type="range"
-                        min={100000}
-                        max={5000000}
-                        step={50000}
-                        value={debtAmount}
-                        onChange={(e) => setDebtAmount(Number(e.target.value))}
-                        className="w-full h-3.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary-600 my-1 py-1"
-                      />
-                      <div className="flex justify-between text-[10px] text-slate-400">
-                        <span>₹1 Lakh</span>
-                        <span>₹25 Lakh</span>
-                        <span>₹50 Lakh+</span>
+                      <div className="grid grid-cols-5 gap-1 text-center">
+                        {DEBT_TIERS.map((tier) => (
+                          <button
+                            key={tier.id}
+                            type="button"
+                            onClick={() => setSelectedDebtTier(tier.id)}
+                            className={`py-1.5 px-1 rounded-lg text-[10px] font-bold border transition-all ${
+                              selectedDebtTier === tier.id
+                                ? "border-primary-600 bg-primary-600 text-white"
+                                : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                            }`}
+                          >
+                            {tier.label}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
-                    {/* 3. Current EMI Status */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                        3. Current EMI / Default Status
-                      </label>
-                      <select
-                        value={emiStatus}
-                        onChange={(e) => setEmiStatus(e.target.value)}
-                        className="w-full px-3 py-2 text-base sm:text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                      >
-                        <option value="overdue-1-3">1 - 3 Months Overdue</option>
-                        <option value="overdue-3-6">3 - 6 Months Overdue (NPA Classification)</option>
-                        <option value="overdue-6-plus">6+ Months Default (Heavy Recovery Calls)</option>
-                        <option value="paying-stress">Paying EMIs with High Distress / Taking Fresh Loans</option>
-                      </select>
-                    </div>
-
-                    {/* 4. Name & Phone */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* 3. Name, Mobile & City */}
+                    <div className="space-y-2.5 pt-1">
                       <div className="space-y-1">
                         <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                           Full Name *
@@ -349,53 +386,83 @@ export function HeroSection() {
                         <input
                           type="text"
                           required
-                          placeholder="Your Name"
+                          placeholder="Your full name"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="w-full px-3 py-2 text-base sm:text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Mobile Number *
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
-                            +91
-                          </span>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                            Mobile Number *
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                              +91
+                            </span>
+                            <input
+                              type="tel"
+                              inputMode="numeric"
+                              required
+                              placeholder="9876543210"
+                              value={phone}
+                              onChange={(e) => {
+                                setPhone(e.target.value);
+                                if (phoneError) setPhoneError(null);
+                              }}
+                              className={`w-full pl-9 pr-2.5 py-2 text-base sm:text-xs rounded-xl border bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 ${
+                                phoneError
+                                  ? "border-red-500 focus-visible:ring-red-500"
+                                  : "border-slate-200 dark:border-slate-800 focus-visible:ring-primary"
+                              }`}
+                            />
+                          </div>
+                          {phoneError && (
+                            <p className="text-[10px] text-red-500 font-semibold pt-0.5">
+                              {phoneError}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                            City *
+                          </label>
                           <input
-                            type="tel"
-                            inputMode="numeric"
+                            type="text"
                             required
-                            placeholder="9876543210"
-                            value={phone}
-                            onChange={(e) => {
-                              setPhone(e.target.value);
-                              if (phoneError) setPhoneError(null);
-                            }}
-                            className={`w-full pl-9 pr-2.5 py-2.5 sm:py-2 text-base sm:text-xs rounded-xl border bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 ${
-                              phoneError
-                                ? "border-red-500 focus-visible:ring-red-500"
-                                : "border-slate-200 dark:border-slate-800 focus-visible:ring-primary"
-                            }`}
+                            placeholder="e.g. Mumbai, Delhi"
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            className="w-full px-3 py-2 text-base sm:text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                           />
                         </div>
-                        {phoneError && (
-                          <p className="text-[10px] text-red-500 font-semibold pt-0.5">
-                            {phoneError}
-                          </p>
-                        )}
                       </div>
                     </div>
 
-                    {/* Live Savings Callout */}
-                    <div className="p-2.5 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 flex items-center justify-between text-xs">
-                      <span className="text-emerald-800 dark:text-emerald-300 font-medium">
-                        Estimated Settlement:
-                      </span>
-                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
-                        {formatINR(estimatedSettlement)} (~{estimatedWaiverPct}% Off)
-                      </span>
+                    {/* 4. Mandatory Privacy Consent Checkbox */}
+                    <div className="pt-1">
+                      <label className="flex items-start gap-2 cursor-pointer text-[11px] text-slate-600 dark:text-slate-400">
+                        <input
+                          type="checkbox"
+                          checked={consent}
+                          onChange={(e) => {
+                            setConsent(e.target.checked);
+                            if (e.target.checked) setConsentError(null);
+                          }}
+                          className="mt-0.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 h-3.5 w-3.5"
+                        />
+                        <span>
+                          I agree that Debt Support Expert may contact me via phone, WhatsApp, or email regarding my enquiry.
+                        </span>
+                      </label>
+                      {consentError && (
+                        <p className="text-[10px] text-red-500 font-semibold pt-0.5">
+                          {consentError}
+                        </p>
+                      )}
                     </div>
 
                     {/* Submit Button */}
@@ -405,7 +472,7 @@ export function HeroSection() {
                       className="w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 hover:from-primary-700 hover:to-blue-800 shadow-md shadow-primary-600/25 active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
                     >
                       {loading ? (
-                        <span>Analyzing Eligibility...</span>
+                        <span>Analyzing Case Details...</span>
                       ) : (
                         <>
                           <ShieldCheck className="h-4 w-4 text-amber-300" />
@@ -417,7 +484,7 @@ export function HeroSection() {
 
                     <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
                       <Lock className="h-3 w-3 text-emerald-500" />
-                      <span>Attorney-client privilege. 100% confidential. No spam calls.</span>
+                      <span>Attorney-client privilege · 100% confidential · Direct lender payment</span>
                     </div>
                   </form>
                 )}
@@ -447,35 +514,23 @@ export function HeroSection() {
             </div>
             <div className="p-2.5 sm:p-3">
               <div className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-primary-600 dark:text-blue-400 tracking-tight">
-                <AnimatedCounter target={70} prefix="Up to " suffix="%" />
+                100%
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 mt-1">
-                Average Waiver Secured
+                Direct-to-Bank Payments
               </div>
             </div>
             <div className="p-2.5 sm:p-3">
               <div className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
-                <AnimatedCounter target={100} suffix="%" />
+                100%
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 mt-1">
-                Legal & RBI Compliant Advisory
+                RBI Fair Practice Compliance
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Case Initiated Modal with WhatsApp Connect */}
-      <CaseInitiatedModal
-        isOpen={modalData.isOpen}
-        onClose={() => setModalData((prev) => ({ ...prev, isOpen: false }))}
-        referenceId={modalData.referenceId}
-        clientName={fullName}
-        phone={phone}
-        whatsappUrl={modalData.whatsappUrl}
-        totalDebt={formatINR(debtAmount)}
-        category={loanType}
-      />
     </section>
   );
 }

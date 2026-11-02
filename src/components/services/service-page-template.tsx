@@ -18,6 +18,7 @@ import { ServiceBreadcrumb } from "./service-breadcrumb";
 import { ServiceSidebar } from "./service-sidebar";
 import { ServiceComparisonTable } from "./service-comparison-table";
 import { ServiceFaqSection } from "./service-faq-section";
+import { BankEscalationFinder } from "./bank-escalation-finder";
 import { siteConfig } from "@/config/site";
 import { FadeIn } from "@/components/animations/motion-wrappers";
 
@@ -281,6 +282,9 @@ export function ServicePageTemplate({ data }: ServicePageTemplateProps) {
             />
           </div>
         </div>
+
+        {/* Bank Escalation Matrix Section */}
+        <BankEscalationFinder />
 
         {/* 5. Bottom Call to Action Banner */}
         <div className="rounded-3xl bg-slate-900 text-white p-8 sm:p-12 text-center space-y-6 relative overflow-hidden shadow-2xl">

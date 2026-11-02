@@ -101,7 +101,7 @@ export function Navbar() {
             >
               <PhoneCall className="h-3 w-3 text-emerald-400" />
               <span className="font-medium text-white">{siteConfig.phoneDisplay}</span>
-              <span className="text-slate-400 text-[11px]">(9:30 AM - 7:00 PM)</span>
+              <span className="text-slate-400 text-[11px]">(9:00 AM - 5:00 PM)</span>
             </a>
           </div>
         </div>
@@ -244,6 +244,21 @@ export function Navbar() {
               <span>Calculator</span>
               <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 Free
+              </span>
+            </Link>
+
+            <Link
+              href="/pricing"
+              className={cn(
+                "px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5",
+                pathname === "/pricing"
+                  ? "text-primary-600 dark:text-primary-400 bg-primary-50/80 dark:bg-primary-950/40"
+                  : "text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/50"
+              )}
+            >
+              <span>Pricing</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">
+                Plans
               </span>
             </Link>
 
@@ -468,6 +483,26 @@ export function Navbar() {
                   </div>
                   <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                     Free
+                  </span>
+                </Link>
+
+                {/* Pricing Link */}
+                <Link
+                  href="/pricing"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
+                    pathname === "/pricing"
+                      ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
+                      : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary-500" />
+                    <span>Advisory Pricing</span>
+                  </div>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-primary-100 text-primary-800 dark:bg-primary-950 dark:text-primary-300">
+                    Transparent
                   </span>
                 </Link>
 
