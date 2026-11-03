@@ -6,18 +6,30 @@ export interface LeadData {
   email?: string;
   city?: string;
   totalDebt?: string;
+  totalDebtRange?: string;
   loanType?: string;
+  legalIssue?: string;
   harassmentLevel?: string;
   facingHarassment?: boolean;
   banks?: string;
+  lenders?: string;
+  overdueStatus?: string;
+  settlementReadiness?: string;
+  consultationMode?: string;
+  consultationSlot?: string;
+  preferredCallbackTime?: string;
   message?: string;
   source?: string;
+  honeypot?: string;
+  website?: string;
+  consentGiven?: boolean;
 }
 
 export interface LeadResponse {
   success: boolean;
   referenceId: string;
   whatsappUrl: string;
+  isExisting?: boolean;
   error?: string;
 }
 
@@ -73,7 +85,7 @@ export function validateIndianPhone(input: string): {
 
 /**
  * Generates an official-looking Case Reference ID
- * Example: DSE-2026-8492
+ * Example: DSE-8492X1
  */
 export function generateReferenceId(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -140,18 +152,25 @@ export function formatWhatsAppLeadMessage(
   if (lead.city) {
     lines.push(`📍 *City / State:* ${lead.city.trim()}`);
   }
-  if (lead.totalDebt) {
-    lines.push(`💰 *Total Unsecured Debt:* ${lead.totalDebt}`);
+  if (lead.totalDebt || lead.totalDebtRange) {
+    lines.push(`💰 *Total Unsecured Debt:* ${lead.totalDebt || lead.totalDebtRange}`);
   }
-  if (lead.loanType) {
-    lines.push(`📑 *Loan Type:* ${formatLoanTypeLabel(lead.loanType)}`);
+  if (lead.loanType || lead.legalIssue) {
+    lines.push(`📑 *Loan Type:* ${formatLoanTypeLabel(lead.loanType || lead.legalIssue)}`);
   }
 
   const harassment = formatHarassmentLabel(lead.harassmentLevel, lead.facingHarassment);
   lines.push(`🚨 *Harassment Status:* ${harassment}`);
 
-  if (lead.banks && lead.banks.trim()) {
-    lines.push(`🏦 *Lending Institutions:* ${lead.banks.trim()}`);
+  const banks = lead.banks || lead.lenders;
+  if (banks && banks.trim()) {
+    lines.push(`🏦 *Lending Institutions:* ${banks.trim()}`);
+  }
+  if (lead.overdueStatus) {
+    lines.push(`🕒 *Overdue:* ${lead.overdueStatus}`);
+  }
+  if (lead.consultationSlot) {
+    lines.push(`🗓️ *Requested Slot:* ${lead.consultationSlot}`);
   }
   if (lead.message && lead.message.trim()) {
     lines.push(`📝 *Case Notes:* ${lead.message.trim()}`);
@@ -165,7 +184,7 @@ export function formatWhatsAppLeadMessage(
 }
 
 /**
- * Submits lead data to Next.js API route /api/lead
+ * Submits lead data to Next.js API route /api/leads
  */
 export async function submitLead(data: LeadData): Promise<LeadResponse> {
   const phoneValidation = validateIndianPhone(data.phone);
@@ -178,17 +197,13 @@ export async function submitLead(data: LeadData): Promise<LeadResponse> {
     };
   }
 
-  const referenceId = generateReferenceId();
-  const cleanedData = {
+  let finalRefId = generateReferenceId();
+  let isExisting = false;
+
+  const payload = {
     ...data,
     phone: phoneValidation.cleaned,
-    referenceId,
   };
-
-  const whatsappMessage = formatWhatsAppLeadMessage(cleanedData);
-  const whatsappUrl = `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(
-    whatsappMessage
-  )}`;
 
   try {
     const res = await fetch("/api/leads", {
@@ -196,20 +211,36 @@ export async function submitLead(data: LeadData): Promise<LeadResponse> {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(cleanedData),
+      body: JSON.stringify(payload),
     });
 
-    if (!res.ok) {
-      console.warn("API lead submission responded with status:", res.status);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.referenceId) {
+        finalRefId = json.referenceId;
+      }
+      isExisting = Boolean(json.isExisting);
+    } else {
+      console.warn("API lead submission responded with non-200 status:", res.status);
     }
   } catch (err) {
     // We log but do not block the user from proceeding to WhatsApp
     console.error("Error submitting lead to /api/leads:", err);
   }
 
+  const whatsappMessage = formatWhatsAppLeadMessage({
+    ...payload,
+    referenceId: finalRefId,
+  });
+
+  const whatsappUrl = `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(
+    whatsappMessage
+  )}`;
+
   return {
     success: true,
-    referenceId,
+    referenceId: finalRefId,
     whatsappUrl,
+    isExisting,
   };
 }
