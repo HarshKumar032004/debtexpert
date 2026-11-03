@@ -167,23 +167,31 @@ export function HeroSection() {
             </p>
 
             {/* Direct Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
+              <Link
+                href="/check-eligibility"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-lg shadow-emerald-600/25 active:scale-95 transition-all text-center flex items-center justify-center gap-2"
+              >
+                <Sparkles className="h-4 w-4 text-amber-300" />
+                <span>60-Sec Eligibility Checker</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
               <a
                 href="#eligibility-form"
-                className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 active:scale-95 transition-all text-center flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 active:scale-95 transition-all text-center flex items-center justify-center gap-2"
               >
-                <span>Free Case Evaluation</span>
-                <ArrowRight className="h-4 w-4" />
+                <span>Quick Callback Form</span>
               </a>
 
               <a
                 href={whatsappDirectUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-all text-center flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-5 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-all text-center flex items-center justify-center gap-2"
               >
                 <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span>WhatsApp an Advocate</span>
+                <span>WhatsApp Desk</span>
               </a>
             </div>
 

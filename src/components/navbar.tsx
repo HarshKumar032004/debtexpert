@@ -27,6 +27,7 @@ const serviceIcons = {
   "/services/credit-card-settlement": CreditCard,
   "/services/anti-harassment": ShieldCheck,
   "/services/business-loan-settlement": Building2,
+  "/services/legal-notice-defense": FileText,
 };
 
 export function Navbar() {

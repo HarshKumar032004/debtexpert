@@ -23,6 +23,7 @@ import {
 import { formatINR } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { ConsultationForm } from "@/components/home/consultation-form";
+import { OtsLetterVerifier } from "@/components/services/ots-letter-verifier";
 
 export interface DebtItem {
   id: string;
@@ -427,6 +428,9 @@ export function CalculatorView() {
           </div>
         </div>
       </div>
+
+      {/* Genuine vs Fake Settlement Letter Verifier */}
+      <OtsLetterVerifier />
 
       {/* Form Anchor with Presets */}
       <div id="consultation-form" className="pt-8 space-y-6">

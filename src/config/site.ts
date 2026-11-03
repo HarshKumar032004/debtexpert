@@ -128,6 +128,19 @@ export const siteConfig = {
         "Asset protection guidance",
       ],
     },
+    {
+      title: "Legal Notice, Sec 138 & Arbitration Defense",
+      shortTitle: "Notice & Sec 138 Defense",
+      href: "/services/legal-notice-defense",
+      description:
+        "Statutory advocate replies for Section 138 cheque bounce, NACH default, and private arbitration ex-parte defense.",
+      badge: "Court & Lok Adalat",
+      features: [
+        "Section 138 NI Act statutory replies",
+        "Block ex-parte arbitration awards",
+        "Lok Adalat court-recorded compromise",
+      ],
+    },
   ] as ServiceItem[],
 
   navLinks: [

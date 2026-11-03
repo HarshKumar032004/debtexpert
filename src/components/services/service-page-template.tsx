@@ -19,6 +19,8 @@ import { ServiceSidebar } from "./service-sidebar";
 import { ServiceComparisonTable } from "./service-comparison-table";
 import { ServiceFaqSection } from "./service-faq-section";
 import { BankEscalationFinder } from "./bank-escalation-finder";
+import { OtsLetterVerifier } from "./ots-letter-verifier";
+import { RbiBorrowerProtectionBento } from "./rbi-borrower-protection-bento";
 import { siteConfig } from "@/config/site";
 import { FadeIn } from "@/components/animations/motion-wrappers";
 
@@ -265,6 +267,17 @@ export function ServicePageTemplate({ data }: ServicePageTemplateProps) {
               rows={data.comparisonRows}
               serviceTitle={data.serviceName}
             />
+
+            {/* Genuine vs Fake Settlement Letter Verifier */}
+            {(data.slug === "personal-loan-settlement" ||
+              data.slug === "credit-card-settlement") && (
+              <OtsLetterVerifier />
+            )}
+
+            {/* RBI 2026–2027 Borrower Protection Bento */}
+            {data.slug === "anti-harassment" && (
+              <RbiBorrowerProtectionBento />
+            )}
 
             {/* Service-Specific FAQs Section */}
             <ServiceFaqSection

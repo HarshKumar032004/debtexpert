@@ -7,6 +7,7 @@ import { SavingsEstimatorSection } from "@/components/home/savings-estimator-sec
 import { SuccessStoriesGrid } from "@/components/home/success-stories-grid";
 import { SeoFaqAccordion } from "@/components/home/seo-faq-accordion";
 import { CTASection } from "@/components/home/cta-section";
+import { RbiBorrowerProtectionBento } from "@/components/services/rbi-borrower-protection-bento";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -51,6 +52,11 @@ export default function HomePage() {
 
       {/* 5. INTERACTIVE SAVINGS ESTIMATOR SECTION (Live slider ₹1L - ₹50L) */}
       <SavingsEstimatorSection />
+
+      {/* 5B. RBI 2026-2027 BORROWER PROTECTION BENTO (Statutory Rights) */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <RbiBorrowerProtectionBento isCompact />
+      </div>
 
       {/* 6. CLIENT SUCCESS STORIES & TESTIMONIALS (Real Indian cases) */}
       <SuccessStoriesGrid />
