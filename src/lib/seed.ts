@@ -3,6 +3,11 @@ import { hashPassword } from "@/lib/auth";
 
 export async function seedDatabaseIfNeeded() {
   try {
+    // Defensive check: Disable automatic cold-start seeding in production unless explicitly opted in (SEC-11)
+    if (process.env.NODE_ENV === "production" && process.env.ALLOW_PROD_SEED !== "true") {
+      return { seeded: false, message: "Automated cold-start seeding disabled in production environment." };
+    }
+
     const existingUsers = await prisma.user.count();
     if (existingUsers > 0) {
       return { seeded: false, message: "Database already contains users." };

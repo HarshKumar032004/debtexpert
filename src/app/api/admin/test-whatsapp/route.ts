@@ -11,6 +11,13 @@ export async function POST() {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
+    if (user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Super Administrator authority required for API diagnostics." },
+        { status: 403 }
+      );
+    }
+
     const testResult = await sendAdminLeadNotification({
       id: "test-id",
       referenceId: "DSE-TEST99",

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { AdminLeadUpdateSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,21 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body = await request.json();
+
+    let rawJson: unknown;
+    try {
+      rawJson = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: "Malformed JSON payload." }, { status: 400 });
+    }
+
+    const validationResult = AdminLeadUpdateSchema.safeParse(rawJson);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0]?.message || "Invalid lead update parameters.";
+      return NextResponse.json({ success: false, error: firstError }, { status: 400 });
+    }
+
+    const body = validationResult.data;
 
     const existingLead = await prisma.lead.findUnique({
       where: { id },

@@ -11,6 +11,11 @@ export default async function AdminSettingsPage() {
     redirect("/admin/login");
   }
 
+  // Strictly enforce SUPER_ADMIN role for administrative settings & roster inspection
+  if (user.role !== "SUPER_ADMIN") {
+    redirect("/admin");
+  }
+
   const staffUsersRaw = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
   });

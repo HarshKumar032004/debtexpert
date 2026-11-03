@@ -2,8 +2,20 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dse_super_secret_jwt_key_2026_secured_crm";
-const secretKey = new TextEncoder().encode(JWT_SECRET);
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "FATAL SECURITY CONFIGURATION: JWT_SECRET environment variable is missing in production environment."
+      );
+    }
+    return "dse_super_secret_jwt_key_2026_secured_crm";
+  }
+  return secret;
+}
+
+const secretKey = new TextEncoder().encode(getJwtSecret());
 
 export const AUTH_COOKIE_NAME = "dse_admin_token";
 

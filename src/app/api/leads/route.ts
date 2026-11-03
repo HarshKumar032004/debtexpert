@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { validateIndianPhone, generateReferenceId } from "@/lib/lead";
 import { sendAdminLeadNotification, sendClientWelcomeMessage } from "@/lib/whatsapp";
 import { seedDatabaseIfNeeded } from "@/lib/seed";
+import { LeadSubmissionSchema } from "@/lib/validations";
 
 // In-memory rate limiting map: ip -> { count, resetAt }
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -11,6 +12,16 @@ const MAX_REQUESTS_PER_WINDOW = 15;
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
+
+  // Prune expired entries to prevent memory leaks (SEC-12)
+  if (rateLimitMap.size > 200) {
+    for (const [key, value] of rateLimitMap.entries()) {
+      if (now > value.resetAt) {
+        rateLimitMap.delete(key);
+      }
+    }
+  }
+
   const record = rateLimitMap.get(ip);
 
   if (!record || now > record.resetAt) {
@@ -44,9 +55,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
+    let rawJson: unknown;
+    try {
+      rawJson = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "Malformed JSON payload." },
+        { status: 400 }
+      );
+    }
 
-    // 2. Honeypot Anti-Spam Check (silent rejection of bots)
+    // 2. Strict Zod Schema Validation (SEC-07)
+    const validationResult = LeadSubmissionSchema.safeParse(rawJson);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0]?.message || "Invalid submission parameters.";
+      return NextResponse.json({ success: false, error: firstError }, { status: 400 });
+    }
+
+    const body = validationResult.data;
+
+    // 3. Honeypot Anti-Spam Check (silent rejection of bots)
     if (body.honeypot || body.website || body.companyFax) {
       console.warn(`[Lead Ingestion] Bot detected via honeypot from IP: ${clientIp}`);
       return NextResponse.json(
@@ -81,14 +109,7 @@ export async function POST(request: Request) {
       source,
     } = body;
 
-    // 3. Mandatory Field Validations
-    if (!fullName || typeof fullName !== "string" || fullName.trim().length < 2) {
-      return NextResponse.json(
-        { success: false, error: "Please provide your full legal name (minimum 2 characters)." },
-        { status: 400 }
-      );
-    }
-
+    // 4. Validate Indian Mobile Phone format
     const phoneValidation = validateIndianPhone(phone || "");
     if (!phoneValidation.isValid) {
       return NextResponse.json(

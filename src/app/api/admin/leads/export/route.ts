@@ -7,8 +7,14 @@ export const dynamic = "force-dynamic";
 
 function escapeCsvField(field: unknown): string {
   if (field === null || field === undefined) return '""';
-  const str = String(field).replace(/"/g, '""');
-  return `"${str}"`;
+  let str = String(field).trim();
+
+  // Neutralize CSV / Excel Formula Injection (DDE attacks)
+  if (/^[=+@\t\r\-]/.test(str)) {
+    str = `'${str}`;
+  }
+
+  return `"${str.replace(/"/g, '""')}"`;
 }
 
 export async function GET(request: Request) {
@@ -16,6 +22,13 @@ export async function GET(request: Request) {
     const user = await getCurrentUser(request);
     if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Super Administrator authority required for bulk client data export." },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);

@@ -1,10 +1,58 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { generateReferenceId, validateIndianPhone } from "@/lib/lead";
 
 export const dynamic = "force-dynamic";
 
 const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN || "dse_legal_webhook_secret_2026";
+
+/**
+ * Timing-safe string comparison to prevent side-channel timing attacks
+ */
+function timingSafeMatch(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+/**
+ * Verifies the x-hub-signature-256 header against the raw request body and META_APP_SECRET
+ */
+function verifyMetaSignature(rawBody: string, signatureHeader: string | null): boolean {
+  const appSecret = process.env.META_APP_SECRET;
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (!appSecret) {
+    if (isProduction) {
+      console.error("❌ [Meta Webhook Security] META_APP_SECRET missing in production. Request rejected.");
+      return false;
+    }
+    // In local dev without secret configured, allow with console warning
+    return true;
+  }
+
+  if (!signatureHeader || !signatureHeader.startsWith("sha256=")) {
+    return false;
+  }
+
+  const signatureHex = signatureHeader.slice(7).trim();
+  const expectedHex = crypto
+    .createHmac("sha256", appSecret)
+    .update(rawBody, "utf8")
+    .digest("hex");
+
+  try {
+    const sigBuf = Buffer.from(signatureHex, "hex");
+    const expBuf = Buffer.from(expectedHex, "hex");
+
+    if (sigBuf.length !== expBuf.length) return false;
+    return crypto.timingSafeEqual(sigBuf, expBuf);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * 1. Meta Webhook Verification Handler (GET)
@@ -16,7 +64,7 @@ export async function GET(request: Request) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+  if (mode === "subscribe" && token && timingSafeMatch(token, VERIFY_TOKEN)) {
     console.log("✅ [Meta Webhook Verification] Successfully verified challenge.");
     return new Response(challenge || "", {
       status: 200,
@@ -33,7 +81,19 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const rawBody = await request.text();
+    const signatureHeader = request.headers.get("x-hub-signature-256");
+
+    // Defensive signature check
+    if (!verifyMetaSignature(rawBody, signatureHeader)) {
+      console.warn("❌ [Meta Webhook Security] Missing or invalid x-hub-signature-256 header.");
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Invalid webhook signature." },
+        { status: 401 }
+      );
+    }
+
+    const body = JSON.parse(rawBody);
 
     // Check if it's a WhatsApp webhook event
     if (body.object === "whatsapp_business_account" || body.entry) {

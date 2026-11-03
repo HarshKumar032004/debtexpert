@@ -19,8 +19,19 @@ export async function POST(
 
     // Toggle completion of existing reminder
     if (body.reminderId) {
+      const existingReminder = await prisma.followUpReminder.findFirst({
+        where: { id: body.reminderId, leadId },
+      });
+
+      if (!existingReminder) {
+        return NextResponse.json(
+          { success: false, error: "Reminder not found for this case file." },
+          { status: 404 }
+        );
+      }
+
       const updatedReminder = await prisma.followUpReminder.update({
-        where: { id: body.reminderId },
+        where: { id: existingReminder.id },
         data: { isCompleted: Boolean(body.isCompleted) },
       });
 
