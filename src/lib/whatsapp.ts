@@ -138,7 +138,7 @@ export interface LeadRecordSummary {
  */
 export async function sendAdminLeadNotification(
   lead: LeadRecordSummary
-): Promise<{ success: boolean; waMessageId?: string; error?: string }> {
+): Promise<{ success: boolean; waMessageId?: string; simulated?: boolean; error?: string }> {
   const alertText = [
     `🚨 *NEW LEGAL CASE INGESTED - DEBT SUPPORT EXPERT*`,
     `----------------------------------------`,
@@ -176,7 +176,7 @@ export async function sendAdminLeadNotification(
  */
 export async function sendClientWelcomeMessage(
   lead: LeadRecordSummary
-): Promise<{ success: boolean; waMessageId?: string; error?: string }> {
+): Promise<{ success: boolean; waMessageId?: string; simulated?: boolean; error?: string }> {
   const welcomeText = [
     `⚖️ *Debt Support Expert — Case Registration Confirmation*`,
     `----------------------------------------`,

@@ -58,7 +58,20 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
 /**
  * Server-side helper to read the authenticated session in Next.js Server Components / Route Handlers
  */
-export async function getCurrentUser(): Promise<SessionPayload | null> {
+export async function getCurrentUser(req?: Request): Promise<SessionPayload | null> {
+  if (req) {
+    try {
+      const cookieHeader = req.headers.get("cookie") || "";
+      const match = cookieHeader.match(new RegExp(`(?:^|; )${AUTH_COOKIE_NAME}=([^;]*)`));
+      if (match && match[1]) {
+        const payload = await verifySessionToken(decodeURIComponent(match[1]));
+        if (payload) return payload;
+      }
+    } catch {
+      // fallback to cookieStore
+    }
+  }
+
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
