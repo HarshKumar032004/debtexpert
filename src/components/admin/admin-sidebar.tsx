@@ -28,6 +28,12 @@ export function AdminSidebar({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
 
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setCollapsed(true);
+    }
+  }, []);
+
   const navItems = [
     {
       label: "Overview",

@@ -27,7 +27,7 @@ export default async function AdminLayout({
   ]);
 
   return (
-    <div className="min-h-screen flex bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950">
+    <div className="h-screen w-screen overflow-hidden flex bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950">
       {/* Collapsible Sidebar */}
       <AdminSidebar
         pendingCount={pendingLeadsCount}
@@ -35,7 +35,7 @@ export default async function AdminLayout({
       />
 
       {/* Main Workspace Frame */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <AdminTopbar user={user} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-950/95">
           {children}

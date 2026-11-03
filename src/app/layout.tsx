@@ -3,10 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { FloatingWhatsApp } from "@/components/floating-whatsapp";
-import { StickyMobileCTA } from "@/components/sticky-mobile-cta";
+import { PublicShell } from "@/components/layout/public-shell";
 import { OrganizationJsonLd } from "@/components/seo/json-ld";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -109,11 +106,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
-          <main className="flex-1 pb-24 md:pb-0">{children}</main>
-          <Footer />
-          <FloatingWhatsApp />
-          <StickyMobileCTA />
+          <PublicShell>{children}</PublicShell>
         </ThemeProvider>
       </body>
     </html>
