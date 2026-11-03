@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   X,
   Phone,
@@ -403,18 +404,28 @@ export function LeadDrawer({
               </select>
             </div>
 
-            {/* Direct WhatsApp link */}
-            <a
-              href={`https://wa.me/${lead.phone}?text=${encodeURIComponent(
-                `Hello ${lead.fullName}, this is Advocate desk at Debt Support Expert regarding your Case Ref #${lead.referenceId}.`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors"
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              <span>Open WhatsApp</span>
-            </a>
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/admin/whatsapp?leadId=${lead.id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span>Inbox Chat</span>
+              </Link>
+
+              <a
+                href={`https://wa.me/${lead.phone}?text=${encodeURIComponent(
+                  `Hello ${lead.fullName}, this is Advocate desk at Debt Support Expert regarding your Case Ref #${lead.referenceId}.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                title="Open Direct in WhatsApp Web"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
           </div>
         )}
 

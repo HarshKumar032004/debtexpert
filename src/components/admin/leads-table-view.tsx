@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Search,
   Filter,
@@ -453,7 +454,16 @@ export function LeadsTableView({
                             <Phone className="h-3.5 w-3.5 text-emerald-400" />
                           </a>
 
-                          {/* WhatsApp */}
+                          {/* In-App WhatsApp Inbox */}
+                          <Link
+                            href={`/admin/whatsapp?leadId=${lead.id}`}
+                            className="p-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-800/80 text-emerald-400 transition-colors"
+                            title="Open In-App WhatsApp Inbox"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </Link>
+
+                          {/* Direct WhatsApp Web */}
                           <a
                             href={`https://wa.me/${lead.phone}?text=${encodeURIComponent(
                               `Hello ${lead.fullName}, this is Advocate desk at Debt Support Expert regarding your Case Ref #${lead.referenceId}.`
@@ -461,9 +471,9 @@ export function LeadsTableView({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
-                            title="Open WhatsApp Chat"
+                            title="Open Direct in WhatsApp Web"
                           >
-                            <MessageCircle className="h-3.5 w-3.5" />
+                            <ExternalLink className="h-3.5 w-3.5" />
                           </a>
 
                           {/* Open Drawer */}

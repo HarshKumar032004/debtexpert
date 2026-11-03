@@ -20,15 +20,19 @@ export default async function AdminLayout({
     return <>{children}</>;
   }
 
-  // Fetch pending count for sidebar badge
-  const pendingLeadsCount = await prisma.lead.count({
-    where: { status: "NEW" },
-  });
+  // Fetch pending count and unread WhatsApp count for sidebar badges
+  const [pendingLeadsCount, unreadWhatsAppCount] = await Promise.all([
+    prisma.lead.count({ where: { status: "NEW" } }),
+    prisma.lead.count({ where: { unreadCount: { gt: 0 } } }),
+  ]);
 
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950">
       {/* Collapsible Sidebar */}
-      <AdminSidebar pendingCount={pendingLeadsCount} />
+      <AdminSidebar
+        pendingCount={pendingLeadsCount}
+        unreadWhatsAppCount={unreadWhatsAppCount}
+      />
 
       {/* Main Workspace Frame */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">

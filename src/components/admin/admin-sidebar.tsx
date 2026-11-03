@@ -18,9 +18,13 @@ import {
 
 interface AdminSidebarProps {
   pendingCount?: number;
+  unreadWhatsAppCount?: number;
 }
 
-export function AdminSidebar({ pendingCount = 0 }: AdminSidebarProps) {
+export function AdminSidebar({
+  pendingCount = 0,
+  unreadWhatsAppCount = 0,
+}: AdminSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
 
@@ -37,6 +41,13 @@ export function AdminSidebar({ pendingCount = 0 }: AdminSidebarProps) {
       icon: Users,
       badge: pendingCount > 0 ? pendingCount : null,
       badgeColor: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
+    },
+    {
+      label: "WhatsApp Inbox",
+      href: "/admin/whatsapp",
+      icon: MessageSquare,
+      badge: unreadWhatsAppCount > 0 ? unreadWhatsAppCount : null,
+      badgeColor: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
     },
     {
       label: "Follow-Up Radar",

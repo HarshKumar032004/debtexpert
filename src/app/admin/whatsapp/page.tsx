@@ -1,0 +1,87 @@
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import { WhatsAppChatView, ConversationItem } from "@/components/admin/whatsapp-chat-view";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminWhatsAppPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ leadId?: string }>;
+}) {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { leadId } = await searchParams;
+
+  const [conversationsRaw, staffMembers] = await Promise.all([
+    prisma.lead.findMany({
+      orderBy: { lastMessageAt: "desc" },
+      take: 60,
+      select: {
+        id: true,
+        referenceId: true,
+        fullName: true,
+        phone: true,
+        city: true,
+        status: true,
+        totalDebtRange: true,
+        harassmentLevel: true,
+        legalIssue: true,
+        unreadCount: true,
+        lastMessageAt: true,
+        assignedTo: {
+          select: { id: true, name: true },
+        },
+        whatsAppMessages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            id: true,
+            content: true,
+            direction: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
+    }),
+    prisma.user.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, role: true },
+    }),
+  ]);
+
+  const initialConversations: ConversationItem[] = conversationsRaw.map((c) => ({
+    id: c.id,
+    referenceId: c.referenceId,
+    fullName: c.fullName,
+    phone: c.phone,
+    city: c.city,
+    status: c.status,
+    totalDebtRange: c.totalDebtRange,
+    harassmentLevel: c.harassmentLevel,
+    legalIssue: c.legalIssue,
+    unreadCount: c.unreadCount,
+    lastMessageAt: c.lastMessageAt.toISOString(),
+    assignedTo: c.assignedTo,
+    whatsAppMessages: c.whatsAppMessages.map((m) => ({
+      id: m.id,
+      content: m.content,
+      direction: m.direction,
+      status: m.status,
+      createdAt: m.createdAt.toISOString(),
+    })),
+  }));
+
+  return (
+    <WhatsAppChatView
+      initialConversations={initialConversations}
+      initialActiveLeadId={leadId || null}
+      staffMembers={staffMembers}
+    />
+  );
+}
