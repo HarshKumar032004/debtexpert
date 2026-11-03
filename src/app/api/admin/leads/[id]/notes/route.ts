@@ -15,12 +15,32 @@ export async function POST(
     }
 
     const { id: leadId } = await params;
-    const body = await request.json();
+
+    // Strict Scope Resolution: verify lead existence (Pillar 4)
+    const leadExists = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { id: true },
+    });
+
+    if (!leadExists) {
+      return NextResponse.json(
+        { success: false, error: "Case file not found." },
+        { status: 404 }
+      );
+    }
+
+    let body: { content?: string } = {};
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: "Malformed JSON payload." }, { status: 400 });
+    }
+
     const content = body.content?.trim();
 
-    if (!content) {
+    if (!content || content.length < 1 || content.length > 3000) {
       return NextResponse.json(
-        { success: false, error: "Note content cannot be empty." },
+        { success: false, error: "Note content must be between 1 and 3000 characters." },
         { status: 400 }
       );
     }

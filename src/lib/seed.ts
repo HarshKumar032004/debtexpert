@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
+import { env } from "@/lib/env";
 
 export async function seedDatabaseIfNeeded() {
   try {
-    // Defensive check: Disable automatic cold-start seeding in production unless explicitly opted in (SEC-11)
-    if (process.env.NODE_ENV === "production" && process.env.ALLOW_PROD_SEED !== "true") {
+    // Defensive check: Disable automatic cold-start seeding in production unless explicitly opted in (Pillar 6)
+    if (env.NODE_ENV === "production" && env.ALLOW_PROD_SEED !== "true") {
       return { seeded: false, message: "Automated cold-start seeding disabled in production environment." };
     }
 

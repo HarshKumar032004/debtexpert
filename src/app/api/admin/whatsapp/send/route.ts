@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendAdminChatMessage } from "@/lib/whatsapp";
+import { WhatsAppSendSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -12,19 +13,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { leadId, messageText, templateName } = body;
-
-    if (!leadId) {
-      return NextResponse.json({ success: false, error: "leadId is required" }, { status: 400 });
+    let rawJson: unknown;
+    try {
+      rawJson = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: "Malformed JSON payload." }, { status: 400 });
     }
 
-    if (!messageText && !templateName) {
-      return NextResponse.json(
-        { success: false, error: "Message text or template name is required" },
-        { status: 400 }
-      );
+    const validationResult = WhatsAppSendSchema.safeParse(rawJson);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0]?.message || "Invalid dispatch parameters.";
+      return NextResponse.json({ success: false, error: firstError }, { status: 400 });
     }
+
+    const { leadId, messageText, templateName } = validationResult.data;
 
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },

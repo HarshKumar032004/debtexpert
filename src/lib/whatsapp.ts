@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 
 const META_API_VERSION = "v21.0";
-const META_PHONE_NUMBER_ID = process.env.META_PHONE_NUMBER_ID;
-const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
-const ADMIN_WHATSAPP_NUMBER = process.env.ADMIN_WHATSAPP_NUMBER || "917979789458";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const META_PHONE_NUMBER_ID = env.META_PHONE_NUMBER_ID;
+const META_ACCESS_TOKEN = env.META_ACCESS_TOKEN;
+const ADMIN_WHATSAPP_NUMBER = env.ADMIN_WHATSAPP_NUMBER;
+const APP_URL = env.NEXT_PUBLIC_APP_URL;
 
 interface SendMetaMessageParams {
   to: string; // E.164 without +, e.g. 919876543210

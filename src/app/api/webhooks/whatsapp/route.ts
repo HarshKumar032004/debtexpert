@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { generateReferenceId, validateIndianPhone } from "@/lib/lead";
+import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
-const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN || "dse_legal_webhook_secret_2026";
-
 /**
- * Timing-safe string comparison to prevent side-channel timing attacks
+ * Timing-safe string comparison using strict buffer allocation (Pillar 3)
  */
 function timingSafeMatch(a: string, b: string): boolean {
+  if (!a || !b) return false;
   const bufA = Buffer.from(a, "utf8");
   const bufB = Buffer.from(b, "utf8");
   if (bufA.length !== bufB.length) return false;
@@ -18,22 +18,23 @@ function timingSafeMatch(a: string, b: string): boolean {
 }
 
 /**
- * Verifies the x-hub-signature-256 header against the raw request body and META_APP_SECRET
+ * Constant-time HMAC-SHA256 signature verification (Pillar 3)
  */
 function verifyMetaSignature(rawBody: string, signatureHeader: string | null): boolean {
-  const appSecret = process.env.META_APP_SECRET;
-  const isProduction = process.env.NODE_ENV === "production";
+  const appSecret = env.META_APP_SECRET;
+  const isProduction = env.NODE_ENV === "production";
 
   if (!appSecret) {
     if (isProduction) {
-      console.error("❌ [Meta Webhook Security] META_APP_SECRET missing in production. Request rejected.");
+      console.error("🚨 [SECURITY ALERT] META_APP_SECRET missing in production. Webhook rejected.");
       return false;
     }
-    // In local dev without secret configured, allow with console warning
+    // Allow in local dev when app secret is not yet configured
     return true;
   }
 
   if (!signatureHeader || !signatureHeader.startsWith("sha256=")) {
+    console.warn("🚨 [SECURITY ALERT] Inbound webhook missing sha256= signature prefix.");
     return false;
   }
 
@@ -47,9 +48,13 @@ function verifyMetaSignature(rawBody: string, signatureHeader: string | null): b
     const sigBuf = Buffer.from(signatureHex, "hex");
     const expBuf = Buffer.from(expectedHex, "hex");
 
-    if (sigBuf.length !== expBuf.length) return false;
+    if (sigBuf.length !== expBuf.length) {
+      console.warn("🚨 [SECURITY ALERT] Webhook signature length mismatch.");
+      return false;
+    }
     return crypto.timingSafeEqual(sigBuf, expBuf);
-  } catch {
+  } catch (err) {
+    console.error("🚨 [SECURITY ALERT] Error evaluating constant-time signature buffer:", err);
     return false;
   }
 }
@@ -64,7 +69,7 @@ export async function GET(request: Request) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  if (mode === "subscribe" && token && timingSafeMatch(token, VERIFY_TOKEN)) {
+  if (mode === "subscribe" && token && timingSafeMatch(token, env.META_WEBHOOK_VERIFY_TOKEN)) {
     console.log("✅ [Meta Webhook Verification] Successfully verified challenge.");
     return new Response(challenge || "", {
       status: 200,

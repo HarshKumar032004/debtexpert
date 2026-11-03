@@ -2,58 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, createSessionToken, AUTH_COOKIE_NAME, UserRole } from "@/lib/auth";
 import { seedDatabaseIfNeeded } from "@/lib/seed";
-import { LoginSubmissionSchema } from "@/lib/validations";
-
-// IP Rate limiting: max 5 failed attempts per 5 minutes per IP (SEC-09)
-const loginRateLimitMap = new Map<string, { attempts: number; blockedUntil: number }>();
-const MAX_FAILED_ATTEMPTS = 5;
-const BLOCK_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-
-function checkLoginRateLimit(ip: string): { allowed: boolean; remainingSeconds?: number } {
-  const now = Date.now();
-
-  // Prune expired entries
-  if (loginRateLimitMap.size > 200) {
-    for (const [key, val] of loginRateLimitMap.entries()) {
-      if (now > val.blockedUntil) {
-        loginRateLimitMap.delete(key);
-      }
-    }
-  }
-
-  const record = loginRateLimitMap.get(ip);
-  if (!record) return { allowed: true };
-
-  if (now > record.blockedUntil) {
-    loginRateLimitMap.delete(ip);
-    return { allowed: true };
-  }
-
-  if (record.attempts >= MAX_FAILED_ATTEMPTS) {
-    const remainingSeconds = Math.ceil((record.blockedUntil - now) / 1000);
-    return { allowed: false, remainingSeconds };
-  }
-
-  return { allowed: true };
-}
-
-function recordFailedLoginAttempt(ip: string) {
-  const now = Date.now();
-  const record = loginRateLimitMap.get(ip);
-
-  if (!record || now > record.blockedUntil) {
-    loginRateLimitMap.set(ip, { attempts: 1, blockedUntil: now + BLOCK_DURATION_MS });
-  } else {
-    record.attempts += 1;
-    if (record.attempts >= MAX_FAILED_ATTEMPTS) {
-      record.blockedUntil = now + BLOCK_DURATION_MS;
-    }
-  }
-}
-
-function clearLoginAttempts(ip: string) {
-  loginRateLimitMap.delete(ip);
-}
+import { AuthLoginSchema } from "@/lib/validations";
+import { authLoginRateLimiter } from "@/lib/rate-limiter";
 
 export async function POST(request: Request) {
   try {
@@ -65,18 +15,7 @@ export async function POST(request: Request) {
       request.headers.get("x-real-ip") ||
       "127.0.0.1";
 
-    // Check rate limit
-    const rateLimit = checkLoginRateLimit(clientIp);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Too many failed login attempts. Please wait ${rateLimit.remainingSeconds || 300} seconds before retrying.`,
-        },
-        { status: 429 }
-      );
-    }
-
+    // Enterprise Bounded Rate Limiting: max 5 failed attempts per 5 minutes per IP (Pillar 5)
     let rawJson: unknown;
     try {
       rawJson = await request.json();
@@ -87,8 +26,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Strict Zod validation (SEC-07)
-    const validationResult = LoginSubmissionSchema.safeParse(rawJson);
+    // Strict Zod Contract Validation (Pillar 2: AuthLoginSchema)
+    const validationResult = AuthLoginSchema.safeParse(rawJson);
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0]?.message || "Invalid credentials provided.";
       return NextResponse.json({ success: false, error: firstError }, { status: 400 });
@@ -97,32 +36,44 @@ export async function POST(request: Request) {
     const { email, password } = validationResult.data;
     const cleanEmail = email.toLowerCase();
 
+    // Standardized generic error to eliminate account enumeration (Pillar 4 / OWASP A07)
+    const genericAuthError = "Invalid email or password.";
+
     const user = await prisma.user.findUnique({
       where: { email: cleanEmail },
     });
 
-    // Standardized generic error to eliminate user enumeration (SEC-08)
-    const genericAuthError = "Invalid email or password.";
-
     if (!user || !user.isActive) {
-      recordFailedLoginAttempt(clientIp);
-      return NextResponse.json(
-        { success: false, error: genericAuthError },
-        { status: 401 }
-      );
+      const rateCheck = authLoginRateLimiter.recordFailure(clientIp);
+      if (rateCheck.blocked) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Too many failed login attempts. Please wait ${rateCheck.retryAfterSeconds} seconds before retrying.`,
+          },
+          { status: 429 }
+        );
+      }
+      return NextResponse.json({ success: false, error: genericAuthError }, { status: 401 });
     }
 
     const isValidPassword = await verifyPassword(password, user.passwordHash);
     if (!isValidPassword) {
-      recordFailedLoginAttempt(clientIp);
-      return NextResponse.json(
-        { success: false, error: genericAuthError },
-        { status: 401 }
-      );
+      const rateCheck = authLoginRateLimiter.recordFailure(clientIp);
+      if (rateCheck.blocked) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Too many failed login attempts. Please wait ${rateCheck.retryAfterSeconds} seconds before retrying.`,
+          },
+          { status: 429 }
+        );
+      }
+      return NextResponse.json({ success: false, error: genericAuthError }, { status: 401 });
     }
 
     // Successful authentication: clear rate limiter
-    clearLoginAttempts(clientIp);
+    authLoginRateLimiter.reset(clientIp);
 
     const token = await createSessionToken({
       userId: user.id,
@@ -159,7 +110,7 @@ export async function POST(request: Request) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 8 * 60 * 60, // 8 hours (Pillar 4)
     });
 
     return response;

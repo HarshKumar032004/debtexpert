@@ -3,39 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { validateIndianPhone, generateReferenceId } from "@/lib/lead";
 import { sendAdminLeadNotification, sendClientWelcomeMessage } from "@/lib/whatsapp";
 import { seedDatabaseIfNeeded } from "@/lib/seed";
-import { LeadSubmissionSchema } from "@/lib/validations";
-
-// In-memory rate limiting map: ip -> { count, resetAt }
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 15;
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-
-  // Prune expired entries to prevent memory leaks (SEC-12)
-  if (rateLimitMap.size > 200) {
-    for (const [key, value] of rateLimitMap.entries()) {
-      if (now > value.resetAt) {
-        rateLimitMap.delete(key);
-      }
-    }
-  }
-
-  const record = rateLimitMap.get(ip);
-
-  if (!record || now > record.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
-    return false;
-  }
-
-  record.count += 1;
-  return true;
-}
+import { LeadIngestionSchema } from "@/lib/validations";
+import { leadsRateLimiter } from "@/lib/rate-limiter";
 
 export async function POST(request: Request) {
   try {
@@ -47,11 +16,20 @@ export async function POST(request: Request) {
       request.headers.get("x-real-ip") ||
       "127.0.0.1";
 
-    // 1. IP Rate Limiting Check
-    if (!checkRateLimit(clientIp)) {
+    // 1. Enterprise Bounded Rate Limiting Check (Pillar 5: max 10 req/min)
+    const rateLimit = leadsRateLimiter.check(clientIp);
+    if (!rateLimit.success) {
       return NextResponse.json(
-        { success: false, error: "Too many inquiries submitted. Please wait 60 seconds." },
-        { status: 429 }
+        {
+          success: false,
+          error: `Rate limit exceeded. Please wait ${rateLimit.retryAfterSeconds} seconds before submitting again.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        }
       );
     }
 
@@ -65,8 +43,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Strict Zod Schema Validation (SEC-07)
-    const validationResult = LeadSubmissionSchema.safeParse(rawJson);
+    // 2. Strict Whitelist & Data Contract Validation (Pillar 2: LeadIngestionSchema)
+    const validationResult = LeadIngestionSchema.safeParse(rawJson);
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0]?.message || "Invalid submission parameters.";
       return NextResponse.json({ success: false, error: firstError }, { status: 400 });

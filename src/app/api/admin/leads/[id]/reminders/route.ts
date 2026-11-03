@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ReminderToggleSchema, ReminderCreateSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +16,39 @@ export async function POST(
     }
 
     const { id: leadId } = await params;
-    const body = await request.json();
 
-    // Toggle completion of existing reminder
-    if (body.reminderId) {
+    // Strict Scope Resolution: verify lead existence (Pillar 4)
+    const leadExists = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { id: true },
+    });
+
+    if (!leadExists) {
+      return NextResponse.json(
+        { success: false, error: "Case file not found." },
+        { status: 404 }
+      );
+    }
+
+    let rawJson: unknown;
+    try {
+      rawJson = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: "Malformed JSON payload." }, { status: 400 });
+    }
+
+    // Toggle completion of existing reminder (Pillar 2 / 4)
+    if (typeof rawJson === "object" && rawJson !== null && "reminderId" in rawJson) {
+      const toggleValidation = ReminderToggleSchema.safeParse(rawJson);
+      if (!toggleValidation.success) {
+        const firstError = toggleValidation.error.issues[0]?.message || "Invalid reminder parameters.";
+        return NextResponse.json({ success: false, error: firstError }, { status: 400 });
+      }
+
+      const { reminderId, isCompleted } = toggleValidation.data;
+
       const existingReminder = await prisma.followUpReminder.findFirst({
-        where: { id: body.reminderId, leadId },
+        where: { id: reminderId, leadId },
       });
 
       if (!existingReminder) {
@@ -32,7 +60,7 @@ export async function POST(
 
       const updatedReminder = await prisma.followUpReminder.update({
         where: { id: existingReminder.id },
-        data: { isCompleted: Boolean(body.isCompleted) },
+        data: { isCompleted },
       });
 
       await prisma.activityLog.create({
@@ -41,7 +69,7 @@ export async function POST(
           userId: user.userId,
           actorName: user.name,
           action: "REMINDER_UPDATED",
-          details: `Reminder marked as ${body.isCompleted ? "Completed" : "Pending"}`,
+          details: `Reminder marked as ${isCompleted ? "Completed" : "Pending"}`,
         },
       });
 
@@ -51,9 +79,15 @@ export async function POST(
       });
     }
 
-    // Create new reminder
-    const scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : null;
-    const note = body.note?.trim() || "Follow up with client";
+    // Create new reminder (Pillar 2)
+    const createValidation = ReminderCreateSchema.safeParse(rawJson);
+    if (!createValidation.success) {
+      const firstError = createValidation.error.issues[0]?.message || "Invalid reminder creation parameters.";
+      return NextResponse.json({ success: false, error: firstError }, { status: 400 });
+    }
+
+    const { scheduledAt: scheduledAtStr, note } = createValidation.data;
+    const scheduledAt = new Date(scheduledAtStr);
 
     if (!scheduledAt || isNaN(scheduledAt.getTime())) {
       return NextResponse.json(

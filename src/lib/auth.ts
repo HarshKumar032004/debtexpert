@@ -1,21 +1,9 @@
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { env } from "@/lib/env";
 
-function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error(
-        "FATAL SECURITY CONFIGURATION: JWT_SECRET environment variable is missing in production environment."
-      );
-    }
-    return "dse_super_secret_jwt_key_2026_secured_crm";
-  }
-  return secret;
-}
-
-const secretKey = new TextEncoder().encode(getJwtSecret());
+const secretKey = new TextEncoder().encode(env.JWT_SECRET);
 
 export const AUTH_COOKIE_NAME = "dse_admin_token";
 
@@ -45,13 +33,13 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 /**
- * Creates a signed JWT session token valid for 7 days
+ * Creates a signed JWT session token strictly valid for 8 hours (Pillar 4)
  */
 export async function createSessionToken(payload: SessionPayload): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime("8h")
     .sign(secretKey);
 }
 

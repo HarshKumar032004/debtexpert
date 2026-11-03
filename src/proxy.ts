@@ -1,21 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { env } from "@/lib/env";
 
-function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error(
-        "FATAL SECURITY CONFIGURATION: JWT_SECRET environment variable is missing in production environment."
-      );
-    }
-    return "dse_super_secret_jwt_key_2026_secured_crm";
-  }
-  return secret;
-}
-
-const secretKey = new TextEncoder().encode(getJwtSecret());
+const secretKey = new TextEncoder().encode(env.JWT_SECRET);
 const AUTH_COOKIE_NAME = "dse_admin_token";
 
 export async function proxy(request: NextRequest) {

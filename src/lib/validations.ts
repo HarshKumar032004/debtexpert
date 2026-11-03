@@ -1,97 +1,158 @@
 import { z } from "zod";
 
 /**
- * Strict Zod validation schemas for API inputs
+ * Enterprise Strict Data Contracts & Validation Pipeline (PILLAR 2)
+ *
+ * Implements strict whitelist validation, regex bounds, HTML sanitization,
+ * and .strict() enforcement to reject unexpected payload parameters.
  */
 
-// 1. Public Lead Ingestion Schema
-export const LeadSubmissionSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(2, "Full name must be at least 2 characters")
-    .max(100, "Full name cannot exceed 100 characters"),
-  phone: z
-    .string()
-    .trim()
-    .min(10, "Phone number must be at least 10 digits")
-    .max(15, "Phone number cannot exceed 15 digits"),
-  email: z
-    .string()
-    .trim()
-    .email("Invalid email format")
-    .max(120, "Email cannot exceed 120 characters")
-    .optional()
-    .or(z.literal(""))
-    .nullable(),
-  city: z.string().trim().max(100).optional().nullable(),
-  totalDebt: z.string().trim().max(50).optional().nullable(),
-  totalDebtRange: z.string().trim().max(50).optional().nullable(),
-  loanType: z.string().trim().max(100).optional().nullable(),
-  legalIssue: z.string().trim().max(100).optional().nullable(),
-  harassmentLevel: z.string().trim().max(100).optional().nullable(),
-  facingHarassment: z.boolean().optional().nullable(),
-  banks: z.string().trim().max(200).optional().nullable(),
-  lenders: z.string().trim().max(200).optional().nullable(),
-  overdueStatus: z.string().trim().max(50).optional().nullable(),
-  settlementReadiness: z.string().trim().max(100).optional().nullable(),
-  consultationMode: z.string().trim().max(50).optional().nullable(),
-  consultationSlot: z.string().trim().max(100).optional().nullable(),
-  preferredCallbackTime: z.string().trim().max(100).optional().nullable(),
-  message: z.string().trim().max(3000, "Message cannot exceed 3000 characters").optional().nullable(),
-  source: z.string().trim().max(80).optional().nullable(),
-  honeypot: z.string().max(100).optional().nullable(),
-  website: z.string().max(100).optional().nullable(),
-  companyFax: z.string().max(100).optional().nullable(),
-  consentGiven: z.boolean().optional().nullable(),
-});
+function sanitizeHtml(input: string): string {
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .trim();
+}
 
-export type LeadSubmissionInput = z.infer<typeof LeadSubmissionSchema>;
+// 1. Strict Lead Ingestion Contract (Public Form Boundary)
+export const LeadIngestionSchema = z
+  .object({
+    fullName: z
+      .string()
+      .trim()
+      .min(2, "Full name must be at least 2 characters")
+      .max(100, "Full name cannot exceed 100 characters")
+      .transform((val) => sanitizeHtml(val)),
 
-// 2. Admin Lead Modification Schema
-export const AdminLeadUpdateSchema = z.object({
-  status: z
-    .enum([
-      "NEW",
-      "CONTACTED",
-      "CONSULTATION_SCHEDULED",
-      "DOCUMENTS_PENDING",
-      "LEGAL_NOTICE_REPLY",
-      "IN_SETTLEMENT_NEGOTIATION",
-      "OTS_SANCTIONED",
-      "FOLLOW_UP",
-      "CONVERTED",
-      "CLOSED",
-      "DROPPED",
-    ])
-    .optional(),
-  assignedToId: z.string().max(64).nullable().optional(),
-  nextFollowUpAt: z.union([z.string(), z.date()]).nullable().optional(),
-  fullName: z.string().trim().min(2).max(100).optional(),
-  email: z.string().trim().email().max(120).nullable().optional().or(z.literal("")),
-  city: z.string().trim().max(100).nullable().optional(),
-  legalIssue: z.string().trim().max(100).optional(),
-  lenders: z.string().trim().max(200).nullable().optional(),
-  totalDebtRange: z.string().trim().max(50).nullable().optional(),
-  overdueStatus: z.string().trim().max(50).nullable().optional(),
-  harassmentLevel: z.string().trim().max(100).nullable().optional(),
-  message: z.string().trim().max(3000).nullable().optional(),
-  unreadCount: z.number().int().min(0).max(9999).optional(),
-});
+    phone: z
+      .string()
+      .trim()
+      .regex(
+        /^(\+91|91|0)?[6-9]\d{9}$/,
+        "Please provide a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9."
+      ),
+
+    email: z
+      .string()
+      .trim()
+      .email("Please enter a valid email address.")
+      .max(120, "Email cannot exceed 120 characters")
+      .optional()
+      .or(z.literal(""))
+      .nullable(),
+
+    city: z.string().trim().max(100).optional().nullable().transform((val) => (val ? sanitizeHtml(val) : val)),
+    totalDebt: z.string().trim().max(50).optional().nullable(),
+    totalDebtRange: z.string().trim().max(50).optional().nullable(),
+    loanType: z.string().trim().max(100).optional().nullable(),
+    legalIssue: z.string().trim().max(100).optional().nullable(),
+    harassmentLevel: z.string().trim().max(100).optional().nullable(),
+    facingHarassment: z.boolean().optional().nullable(),
+    banks: z.string().trim().max(200).optional().nullable().transform((val) => (val ? sanitizeHtml(val) : val)),
+    lenders: z.string().trim().max(200).optional().nullable().transform((val) => (val ? sanitizeHtml(val) : val)),
+    overdueStatus: z.string().trim().max(50).optional().nullable(),
+    settlementReadiness: z.string().trim().max(100).optional().nullable(),
+    consultationMode: z.string().trim().max(50).optional().nullable(),
+    consultationSlot: z.string().trim().max(100).optional().nullable(),
+    preferredCallbackTime: z.string().trim().max(100).optional().nullable(),
+
+    message: z
+      .string()
+      .trim()
+      .max(3000, "Case notes cannot exceed 3000 characters")
+      .optional()
+      .nullable()
+      .transform((val) => (val ? sanitizeHtml(val) : val)),
+
+    source: z.string().trim().max(80).optional().nullable(),
+
+    // Anti-spam bot honeypots
+    honeypot: z.string().max(100).optional().nullable(),
+    website: z.string().max(100).optional().nullable(),
+    companyFax: z.string().max(100).optional().nullable(),
+    consentGiven: z.boolean().optional().nullable(),
+  })
+  .strict();
+
+export type LeadIngestionInput = z.infer<typeof LeadIngestionSchema>;
+
+// 2. Strict Admin Lead Update Contract
+export const AdminLeadUpdateSchema = z
+  .object({
+    status: z
+      .enum([
+        "NEW",
+        "CONTACTED",
+        "CONSULTATION_SCHEDULED",
+        "DOCUMENTS_PENDING",
+        "LEGAL_NOTICE_REPLY",
+        "IN_SETTLEMENT_NEGOTIATION",
+        "OTS_SANCTIONED",
+        "FOLLOW_UP",
+        "CONVERTED",
+        "CLOSED",
+        "DROPPED",
+      ])
+      .optional(),
+    assignedToId: z.string().max(64).nullable().optional(),
+    nextFollowUpAt: z.string().datetime().nullable().optional().or(z.literal("")),
+    fullName: z.string().trim().min(2).max(100).optional().transform((val) => (val ? sanitizeHtml(val) : val)),
+    email: z.string().trim().email().max(120).nullable().optional().or(z.literal("")),
+    city: z.string().trim().max(100).nullable().optional().transform((val) => (val ? sanitizeHtml(val) : val)),
+    legalIssue: z.string().trim().max(100).optional().transform((val) => (val ? sanitizeHtml(val) : val)),
+    lenders: z.string().trim().max(200).nullable().optional().transform((val) => (val ? sanitizeHtml(val) : val)),
+    totalDebtRange: z.string().trim().max(50).nullable().optional(),
+    overdueStatus: z.string().trim().max(50).nullable().optional(),
+    harassmentLevel: z.string().trim().max(100).nullable().optional(),
+    message: z.string().trim().max(3000).nullable().optional().transform((val) => (val ? sanitizeHtml(val) : val)),
+    unreadCount: z.number().int().min(0).max(9999).optional(),
+  })
+  .strict();
 
 export type AdminLeadUpdateInput = z.infer<typeof AdminLeadUpdateSchema>;
 
-// 3. Admin Authentication Login Schema
-export const LoginSubmissionSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email("Please provide a valid email address")
-    .max(120, "Email cannot exceed 120 characters"),
-  password: z
-    .string()
-    .min(1, "Password cannot be empty")
-    .max(128, "Password length exceeds safety limit"),
-});
+// 3. Strict Authentication Contract
+export const AuthLoginSchema = z
+  .object({
+    email: z
+      .string()
+      .trim()
+      .email("Please provide a valid advocate email address.")
+      .max(120, "Email cannot exceed 120 characters"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(100, "Password length cannot exceed 100 characters"),
+  })
+  .strict();
 
-export type LoginSubmissionInput = z.infer<typeof LoginSubmissionSchema>;
+export type AuthLoginInput = z.infer<typeof AuthLoginSchema>;
+
+// 4. Strict Reminder Contracts
+export const ReminderToggleSchema = z
+  .object({
+    reminderId: z.string().min(1, "reminderId is required"),
+    isCompleted: z.boolean(),
+  })
+  .strict();
+
+export const ReminderCreateSchema = z
+  .object({
+    scheduledAt: z.string().datetime("Valid ISO datetime required"),
+    note: z.string().trim().max(500, "Note cannot exceed 500 characters").optional().default("Follow up with client"),
+  })
+  .strict();
+
+// 5. Strict WhatsApp Outbound Message Contract
+export const WhatsAppSendSchema = z
+  .object({
+    leadId: z.string().min(1, "leadId is required"),
+    messageText: z.string().trim().max(3000, "Message cannot exceed 3000 characters").optional(),
+    templateName: z.string().trim().max(100).optional(),
+  })
+  .strict()
+  .refine((data) => Boolean(data.messageText || data.templateName), {
+    message: "Either messageText or templateName must be provided.",
+  });
+
+export type WhatsAppSendInput = z.infer<typeof WhatsAppSendSchema>;
