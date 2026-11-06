@@ -5,6 +5,8 @@ import { siteConfig } from "@/config/site";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PublicShell } from "@/components/layout/public-shell";
 import { OrganizationJsonLd } from "@/components/seo/json-ld";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -107,6 +109,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <PublicShell>{children}</PublicShell>
+          <Analytics />
+          <SpeedInsights />
         </ThemeProvider>
       </body>
     </html>

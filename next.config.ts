@@ -33,7 +33,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self'",
-      "connect-src 'self' https://graph.facebook.com",
+      "connect-src 'self' https://graph.facebook.com https://vitals.vercel-insights.com https://va.vercel-scripts.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
