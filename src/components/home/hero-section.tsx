@@ -107,6 +107,7 @@ export function HeroSection() {
       totalDebt: activeDebtLabel,
       loanType: activeIssueLabel,
       source: "hero-quick-form",
+      website: honeypot || undefined,
       facingHarassment:
         selectedIssue === "harassment" || selectedIssue === "legal-notice",
     });
@@ -323,13 +324,13 @@ export function HeroSection() {
                   </motion.div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-3.5 pt-4">
-                    {/* Honeypot field (hidden) */}
+                    {/* Honeypot field (hidden for bots) */}
                     <input
                       type="text"
                       name="website"
                       value={honeypot}
                       onChange={(e) => setHoneypot(e.target.value)}
-                      style={{ display: "none" }}
+                      className="opacity-0 absolute -left-[9999px] w-1 h-1"
                       tabIndex={-1}
                       autoComplete="off"
                     />

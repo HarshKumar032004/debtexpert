@@ -120,6 +120,7 @@ export function ContactSplitLayout() {
   const [status, setStatus] = React.useState<"idle" | "submitting" | "success">("idle");
   const [phoneError, setPhoneError] = React.useState<string | null>(null);
   const [consentError, setConsentError] = React.useState<string | null>(null);
+  const [dateError, setDateError] = React.useState<string | null>(null);
   const [modalData, setModalData] = React.useState({
     isOpen: false,
     referenceId: "",
@@ -127,6 +128,26 @@ export function ContactSplitLayout() {
     submittedName: "",
     submittedPhone: "",
   });
+
+  const handleDateChange = (dateVal: string) => {
+    if (!dateVal) {
+      setBookDate("");
+      setDateError(null);
+      return;
+    }
+    const parts = dateVal.split("-").map(Number);
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      const dateObj = new Date(year, month - 1, day);
+      const dayOfWeek = dateObj.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        setDateError("Advocate consultations are only held on weekdays (Monday to Friday). Please select a valid weekday.");
+      } else {
+        setDateError(null);
+      }
+    }
+    setBookDate(dateVal);
+  };
 
   const toggleBank = (bank: string) => {
     setSelectedBanks((prev) =>
@@ -194,6 +215,23 @@ export function ContactSplitLayout() {
     e.preventDefault();
     setPhoneError(null);
     setConsentError(null);
+
+    if (dateError) {
+      return;
+    }
+
+    if (bookDate) {
+      const parts = bookDate.split("-").map(Number);
+      if (parts.length === 3) {
+        const [year, month, day] = parts;
+        const dateObj = new Date(year, month - 1, day);
+        const dayOfWeek = dateObj.getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+          setDateError("Advocate consultations are only held on weekdays (Monday to Friday). Please select a valid weekday.");
+          return;
+        }
+      }
+    }
 
     if (honeypot) {
       setStatus("success");
@@ -878,28 +916,52 @@ export function ContactSplitLayout() {
                   </div>
                 </div>
 
-                {/* Weekday Date Picker (Next 5 Weekdays) */}
+                {/* Weekday Date Picker (Next 5 Weekdays + Date Input) */}
                 <div className="space-y-1.5 pt-1">
-                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
-                    Select Consultation Day (Mon–Fri) *
-                  </label>
-                  <div className="grid grid-cols-5 gap-1.5 text-center">
-                    {upcomingWeekdays.map((item) => (
-                      <button
-                        key={item.dateStr}
-                        type="button"
-                        onClick={() => setBookDate(item.dateStr)}
-                        className={`py-2 px-1 rounded-xl border transition-all ${
-                          bookDate === item.dateStr
-                            ? "border-primary bg-primary text-primary-foreground font-bold shadow-sm"
-                            : "border-border text-muted-foreground hover:bg-muted"
-                        }`}
-                      >
-                        <span className="block text-[10px] uppercase font-semibold opacity-80">{item.day}</span>
-                        <span className="block text-xs font-bold">{item.label}</span>
-                      </button>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                      Select Consultation Date (Mon–Fri) *
+                    </label>
+                    <span className="text-[10px] text-muted-foreground">Weekdays Only</span>
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <div className="sm:col-span-4">
+                      <input
+                        type="date"
+                        name="consultationDate"
+                        aria-label="Consultation Date"
+                        value={bookDate}
+                        onChange={(e) => handleDateChange(e.target.value)}
+                        className={`w-full px-3 py-2 rounded-xl border text-xs bg-background text-foreground focus:ring-2 outline-none ${
+                          dateError ? "border-red-500 focus:ring-red-500" : "border-input focus:ring-primary"
+                        }`}
+                      />
+                    </div>
+                    <div className="sm:col-span-8 grid grid-cols-5 gap-1.5 text-center">
+                      {upcomingWeekdays.map((item) => (
+                        <button
+                          key={item.dateStr}
+                          type="button"
+                          onClick={() => handleDateChange(item.dateStr)}
+                          className={`py-2 px-1 rounded-xl border transition-all ${
+                            bookDate === item.dateStr && !dateError
+                              ? "border-primary bg-primary text-primary-foreground font-bold shadow-sm"
+                              : "border-border text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <span className="block text-[10px] uppercase font-semibold opacity-80">{item.day}</span>
+                          <span className="block text-xs font-bold">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {dateError && (
+                    <p data-testid="date-error" className="text-[11px] text-red-500 font-semibold pt-0.5">
+                      {dateError}
+                    </p>
+                  )}
                 </div>
 
                 {/* Time Slot */}
@@ -949,7 +1011,7 @@ export function ContactSplitLayout() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={status === "submitting"}
+                  disabled={status === "submitting" || Boolean(dateError)}
                   className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
                 >
                   {status === "submitting" ? (

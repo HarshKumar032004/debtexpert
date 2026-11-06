@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { CalculatorView } from "@/components/calculator/calculator-view";
+import { InteractiveCalculatorTeaser } from "@/components/home/interactive-calculator-teaser";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -13,7 +14,11 @@ export const metadata: Metadata = {
 
 export default function CalculatorPage() {
   return (
-    <div className="py-12 md:py-20 bg-background text-foreground">
+    <div className="py-12 md:py-20 bg-background text-foreground space-y-12">
+      <div className="container mx-auto px-4 sm:px-6">
+        <InteractiveCalculatorTeaser />
+      </div>
+
       <div className="container mx-auto px-4 sm:px-6">
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">

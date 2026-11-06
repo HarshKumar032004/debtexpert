@@ -299,7 +299,7 @@ export async function seedDatabaseIfNeeded() {
 }
 
 // Standalone execution if executed directly via node/ts-node
-if (require.main === module) {
+if (typeof require !== "undefined" && typeof module !== "undefined" && require.main === module) {
   seedDatabaseIfNeeded()
     .then((res) => {
       console.log(res);

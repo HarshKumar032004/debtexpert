@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -233,27 +232,18 @@ export function EligibilityWizard() {
 
         {/* Progress Bar */}
         <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-primary-600 via-primary-500 to-emerald-500"
-            initial={{ width: "14%" }}
-            animate={{ width: `${(step / 7) * 100}%` }}
-            transition={{ duration: 0.3 }}
+          <div
+            className="h-full bg-primary"
+            style={{ width: `${(step / 7) * 100}%` }}
           />
         </div>
       </div>
 
       {/* Main Wizard Card */}
-      <div className="rounded-3xl border border-border bg-card p-5 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
-        <AnimatePresence mode="wait">
-          {/* STEP 1: DEBT TYPE */}
-          {step === 1 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
+      <div className="rounded-3xl border border-border bg-card p-5 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden">
+        {/* STEP 1: DEBT TYPE */}
+        {step === 1 && (
+          <div key="step1" className="space-y-6">
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
                   Question 1 of 6
@@ -305,18 +295,12 @@ export function EligibilityWizard() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* STEP 2: TOTAL OUTSTANDING */}
           {step === 2 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
+            <div key="step2" className="space-y-6">
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
                   Question 2 of 6
@@ -370,18 +354,12 @@ export function EligibilityWizard() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* STEP 3: LENDERS */}
           {step === 3 && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
+            <div key="step3" className="space-y-6">
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
                   Question 3 of 6
@@ -432,18 +410,12 @@ export function EligibilityWizard() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* STEP 4: OVERDUE STATUS */}
           {step === 4 && (
-            <motion.div
-              key="step4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
+            <div key="step4" className="space-y-6">
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
                   Question 4 of 6
@@ -495,18 +467,12 @@ export function EligibilityWizard() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* STEP 5: BIGGEST WORRY */}
           {step === 5 && (
-            <motion.div
-              key="step5"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
+            <div key="step5" className="space-y-6">
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
                   Question 5 of 6
@@ -563,18 +529,12 @@ export function EligibilityWizard() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* STEP 6: SETTLEMENT READINESS */}
           {step === 6 && (
-            <motion.div
-              key="step6"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
+            <div key="step6" className="space-y-6">
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
                   Question 6 of 6
@@ -628,17 +588,12 @@ export function EligibilityWizard() {
                   <span>View My Legal Strategy</span>
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* STEP 7: PERSONALIZED RECOMMENDATION CARD */}
           {step === 7 && (
-            <motion.div
-              key="step7"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="space-y-6"
-            >
+            <div key="step7" className="space-y-6">
               {/* Recommendation Header */}
               <div className="space-y-2 text-center pb-2 border-b border-border">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border shadow-sm">
@@ -838,9 +793,8 @@ export function EligibilityWizard() {
                 <Lock className="h-3 w-3 text-emerald-500" />
                 <span>Zero Advance Fees · 100% Direct Bank Settlement · RBI Fair Practice Code</span>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
       </div>
     </div>
   );
