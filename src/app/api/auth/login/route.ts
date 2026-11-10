@@ -7,8 +7,12 @@ import { authLoginRateLimiter } from "@/lib/rate-limiter";
 
 export async function POST(request: Request) {
   try {
-    // Ensure DB is initialized
-    await seedDatabaseIfNeeded();
+    // Ensure DB is initialized (fail-safe)
+    try {
+      await seedDatabaseIfNeeded();
+    } catch (seedErr) {
+      console.warn("Seed check notice during login:", seedErr);
+    }
 
     const clientIp =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -116,12 +120,9 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     console.error("Login API Error:", error);
-    const errorMsg =
-      error instanceof Error && (error.message.includes("database") || error.message.includes("connect") || error.message.includes("table"))
-        ? "Database connection issue: Please verify DATABASE_URL in Vercel and run 'npx prisma db push'."
-        : "Internal server error during authentication.";
+    const detail = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { success: false, error: errorMsg },
+      { success: false, error: `Authentication error: ${detail}` },
       { status: 500 }
     );
   }
