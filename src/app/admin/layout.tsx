@@ -11,20 +11,37 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await seedDatabaseIfNeeded();
+  try {
+    await seedDatabaseIfNeeded();
+  } catch (err) {
+    console.warn("Database seed notice:", err);
+  }
 
-  const user = await getCurrentUser();
+  let user = null;
+  try {
+    user = await getCurrentUser();
+  } catch (err) {
+    console.warn("User session check notice:", err);
+  }
 
   // If unauthenticated (e.g. visiting /admin/login), render children directly without admin chrome
   if (!user) {
     return <>{children}</>;
   }
 
-  // Fetch pending count and unread WhatsApp count for sidebar badges
-  const [pendingLeadsCount, unreadWhatsAppCount] = await Promise.all([
-    prisma.lead.count({ where: { status: "NEW" } }),
-    prisma.lead.count({ where: { unreadCount: { gt: 0 } } }),
-  ]);
+  // Fetch pending count and unread WhatsApp count for sidebar badges with defensive fallback
+  let pendingLeadsCount = 0;
+  let unreadWhatsAppCount = 0;
+  try {
+    const [pCount, uCount] = await Promise.all([
+      prisma.lead.count({ where: { status: "NEW" } }),
+      prisma.lead.count({ where: { unreadCount: { gt: 0 } } }),
+    ]);
+    pendingLeadsCount = pCount;
+    unreadWhatsAppCount = uCount;
+  } catch (dbErr) {
+    console.warn("Sidebar badge query notice (database may still be initializing):", dbErr);
+  }
 
   return (
     <div className="h-screen w-screen overflow-hidden flex bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950">

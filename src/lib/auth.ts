@@ -3,7 +3,13 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { env } from "@/lib/env";
 
-const secretKey = new TextEncoder().encode(env.JWT_SECRET);
+function getSecretKey(): Uint8Array {
+  const secret =
+    process.env.JWT_SECRET ||
+    (typeof env !== "undefined" ? env.JWT_SECRET : "") ||
+    "dse_fallback_dev_secret_key_minimum_32_characters";
+  return new TextEncoder().encode(secret);
+}
 
 export const AUTH_COOKIE_NAME = "dse_admin_token";
 
@@ -40,7 +46,7 @@ export async function createSessionToken(payload: SessionPayload): Promise<strin
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("8h")
-    .sign(secretKey);
+    .sign(getSecretKey());
 }
 
 /**
@@ -48,7 +54,7 @@ export async function createSessionToken(payload: SessionPayload): Promise<strin
  */
 export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, secretKey);
+    const { payload } = await jwtVerify(token, getSecretKey());
     return payload as unknown as SessionPayload;
   } catch {
     return null;

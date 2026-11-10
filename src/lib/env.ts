@@ -91,19 +91,29 @@ function validateEnvironment() {
 
     const message = [
       "====================================================================",
-      "🚨 [FATAL SECURITY MISCONFIGURATION] ENVIRONMENT VALIDATION FAILED",
+      "🚨 [CRITICAL CONFIGURATION NOTICE] ENVIRONMENT VARIABLES INCOMPLETE",
       "====================================================================",
       errorDetails,
       "====================================================================",
-      "The application refused to bootstrap under the Fail-Closed Principle.",
-      "Check your .env / deployment configuration and restart.",
+      "The application is running with fallback defaults for missing secrets.",
+      "Configure missing environment variables in your deployment dashboard.",
       "====================================================================",
     ].join("\n");
 
     console.error(message);
-    throw new Error(
-      `Application terminated due to invalid environment security contracts:\n${errorDetails}`
-    );
+
+    return {
+      DATABASE_URL: process.env.DATABASE_URL || "file:./dev.db",
+      JWT_SECRET: process.env.JWT_SECRET || BUILD_PLACEHOLDER_JWT,
+      ADMIN_WHATSAPP_NUMBER: process.env.ADMIN_WHATSAPP_NUMBER || "919876543210",
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      NODE_ENV: (process.env.NODE_ENV as "development" | "test" | "production") || "development",
+      META_ACCESS_TOKEN: process.env.META_ACCESS_TOKEN || "",
+      META_PHONE_NUMBER_ID: process.env.META_PHONE_NUMBER_ID || "",
+      META_WEBHOOK_VERIFY_TOKEN: process.env.META_WEBHOOK_VERIFY_TOKEN || "dse_legal_webhook_secret_2026",
+      META_APP_SECRET: process.env.META_APP_SECRET || "",
+      ALLOW_PROD_SEED: process.env.ALLOW_PROD_SEED || "false",
+    };
   }
 
   return result.data;

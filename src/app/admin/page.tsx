@@ -36,55 +36,110 @@ function formatINRShort(val: number): string {
 }
 
 export default async function AdminDashboardPage() {
-  await seedDatabaseIfNeeded();
+  try {
+    await seedDatabaseIfNeeded();
+  } catch (err) {
+    console.warn("Database seed notice:", err);
+  }
 
-  const user = await getCurrentUser();
+  let user = null;
+  try {
+    user = await getCurrentUser();
+  } catch (err) {
+    console.warn("Auth check notice:", err);
+  }
+
   if (!user) {
     redirect("/admin/login");
   }
 
   const now = new Date();
 
-  // 1. Fetch KPI Counts in parallel
-  const [
-    totalLeads,
-    totalActive,
-    harassmentCount,
-    scheduledCount,
-    convertedCount,
-    activeLeadsWithDebt,
-    staffMembers,
-  ] = await Promise.all([
-    prisma.lead.count(),
-    prisma.lead.count({ where: { status: { not: "CLOSED" } } }),
-    prisma.lead.count({
+  // 1. Fetch KPI Counts with defensive fallback
+  let totalLeads = 0;
+  let totalActive = 0;
+  let harassmentCount = 0;
+  let scheduledCount = 0;
+  let convertedCount = 0;
+  let activeLeadsWithDebt: { totalDebtRange: string | null }[] = [];
+  let staffMembers: { id: string; name: string; role: string }[] = [];
+  let recentLeads: { createdAt: Date }[] = [];
+  let followUpLeadsRaw: any[] = [];
+
+  try {
+    const [
+      tl,
+      ta,
+      hc,
+      sc,
+      cc,
+      ald,
+      sm,
+    ] = await Promise.all([
+      prisma.lead.count(),
+      prisma.lead.count({ where: { status: { not: "CLOSED" } } }),
+      prisma.lead.count({
+        where: {
+          OR: [
+            { harassmentLevel: { not: null } },
+            { legalIssue: { contains: "138" } },
+            { legalIssue: { contains: "Notice" } },
+            { legalIssue: { contains: "Harassment" } },
+          ],
+        },
+      }),
+      prisma.lead.count({
+        where: {
+          OR: [
+            { status: "CONSULTATION_SCHEDULED" },
+            { consultationSlot: { not: null } },
+          ],
+        },
+      }),
+      prisma.lead.count({ where: { status: "CONVERTED" } }),
+      prisma.lead.findMany({
+        where: { status: { not: "CLOSED" } },
+        select: { totalDebtRange: true },
+      }),
+      prisma.user.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, role: true },
+      }),
+    ]);
+    totalLeads = tl;
+    totalActive = ta;
+    harassmentCount = hc;
+    scheduledCount = sc;
+    convertedCount = cc;
+    activeLeadsWithDebt = ald;
+    staffMembers = sm;
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    recentLeads = await prisma.lead.findMany({
+      where: {
+        createdAt: { gte: sevenDaysAgo },
+      },
+      select: { createdAt: true },
+    });
+
+    followUpLeadsRaw = await prisma.lead.findMany({
       where: {
         OR: [
-          { harassmentLevel: { not: null } },
-          { legalIssue: { contains: "138" } },
-          { legalIssue: { contains: "Notice" } },
-          { legalIssue: { contains: "Harassment" } },
+          { status: "FOLLOW_UP" },
+          { nextFollowUpAt: { lte: now } },
+          { status: "NEW" },
         ],
+        status: { not: "CLOSED" },
       },
-    }),
-    prisma.lead.count({
-      where: {
-        OR: [
-          { status: "CONSULTATION_SCHEDULED" },
-          { consultationSlot: { not: null } },
-        ],
-      },
-    }),
-    prisma.lead.count({ where: { status: "CONVERTED" } }),
-    prisma.lead.findMany({
-      where: { status: { not: "CLOSED" } },
-      select: { totalDebtRange: true },
-    }),
-    prisma.user.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, role: true },
-    }),
-  ]);
+      orderBy: [{ nextFollowUpAt: "asc" }, { updatedAt: "desc" }],
+      take: 8,
+    });
+  } catch (dbErr) {
+    console.warn("Database query notice in AdminDashboardPage (database may still be initializing):", dbErr);
+  }
 
   // Compute Pipeline Value
   const totalPipelineAmount = activeLeadsWithDebt.reduce(
@@ -98,17 +153,6 @@ export default async function AdminDashboardPage() {
     totalLeads > 0 ? Math.round((convertedCount / totalLeads) * 100) : 0;
 
   // 2. Compute 7-Day Ingestion Volume
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-  sevenDaysAgo.setHours(0, 0, 0, 0);
-
-  const recentLeads = await prisma.lead.findMany({
-    where: {
-      createdAt: { gte: sevenDaysAgo },
-    },
-    select: { createdAt: true },
-  });
-
   const dailyVolume = [];
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -129,20 +173,6 @@ export default async function AdminDashboardPage() {
       isToday: i === 0,
     });
   }
-
-  // 3. Follow-Up Radar: Leads where nextFollowUpAt <= now OR status == 'FOLLOW_UP' OR 'NEW'
-  const followUpLeadsRaw = await prisma.lead.findMany({
-    where: {
-      OR: [
-        { status: "FOLLOW_UP" },
-        { nextFollowUpAt: { lte: now } },
-        { status: "NEW" },
-      ],
-      status: { not: "CLOSED" },
-    },
-    orderBy: [{ nextFollowUpAt: "asc" }, { updatedAt: "desc" }],
-    take: 8,
-  });
 
   const initialFollowUps = followUpLeadsRaw.map((l) => ({
     id: l.id,

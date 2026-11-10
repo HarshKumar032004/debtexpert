@@ -116,8 +116,12 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     console.error("Login API Error:", error);
+    const errorMsg =
+      error instanceof Error && (error.message.includes("database") || error.message.includes("connect") || error.message.includes("table"))
+        ? "Database connection issue: Please verify DATABASE_URL in Vercel and run 'npx prisma db push'."
+        : "Internal server error during authentication.";
     return NextResponse.json(
-      { success: false, error: "Internal server error during authentication." },
+      { success: false, error: errorMsg },
       { status: 500 }
     );
   }
