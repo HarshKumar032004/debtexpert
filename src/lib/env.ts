@@ -20,11 +20,24 @@ const isBuildPhase =
 
 const BUILD_PLACEHOLDER_JWT = "build_placeholder_secret_key_0000000000000000000000000000000000000000000000";
 
+function cleanValue(val: unknown): string {
+  if (typeof val !== "string") return "";
+  let clean = val.trim();
+  if (
+    (clean.startsWith('"') && clean.endsWith('"')) ||
+    (clean.startsWith("'") && clean.endsWith("'"))
+  ) {
+    clean = clean.slice(1, -1).trim();
+  }
+  return clean;
+}
+
+const POSTGRES_BUILD_PLACEHOLDER = "postgresql://build:build@localhost:5432/build";
+
 const BaseEnvSchema = z.object({
   DATABASE_URL: z
-    .string()
-    .min(1, "DATABASE_URL cannot be empty.")
-    .default(() => (isBuildPhase ? "file:./dev.db" : "")),
+    .preprocess(cleanValue, z.string())
+    .default(() => (isBuildPhase ? POSTGRES_BUILD_PLACEHOLDER : "")),
 
   JWT_SECRET: z
     .string()
@@ -103,7 +116,7 @@ function validateEnvironment() {
     console.error(message);
 
     return {
-      DATABASE_URL: process.env.DATABASE_URL || "file:./dev.db",
+      DATABASE_URL: cleanValue(process.env.DATABASE_URL) || POSTGRES_BUILD_PLACEHOLDER,
       JWT_SECRET: process.env.JWT_SECRET || BUILD_PLACEHOLDER_JWT,
       ADMIN_WHATSAPP_NUMBER: process.env.ADMIN_WHATSAPP_NUMBER || "919876543210",
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",

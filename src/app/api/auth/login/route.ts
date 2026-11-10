@@ -43,6 +43,17 @@ export async function POST(request: Request) {
     // Standardized generic error to eliminate account enumeration (Pillar 4 / OWASP A07)
     const genericAuthError = "Invalid email or password.";
 
+    const rawDbUrl = process.env.DATABASE_URL;
+    if (!rawDbUrl || rawDbUrl.trim() === "" || rawDbUrl.includes("build:build@localhost") || rawDbUrl.includes("placeholder")) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "DATABASE_URL is not set in Vercel. Please add your Neon connection string in Vercel Settings > Environment Variables (without quotes) and Redeploy.",
+        },
+        { status: 500 }
+      );
+    }
+
     const user = await prisma.user.findUnique({
       where: { email: cleanEmail },
     });
