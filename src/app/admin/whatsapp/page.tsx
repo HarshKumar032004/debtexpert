@@ -17,43 +17,72 @@ export default async function AdminWhatsAppPage({
 
   const { leadId } = await searchParams;
 
-  const [conversationsRaw, staffMembers] = await Promise.all([
-    prisma.lead.findMany({
-      orderBy: { lastMessageAt: "desc" },
-      take: 60,
-      select: {
-        id: true,
-        referenceId: true,
-        fullName: true,
-        phone: true,
-        city: true,
-        status: true,
-        totalDebtRange: true,
-        harassmentLevel: true,
-        legalIssue: true,
-        unreadCount: true,
-        lastMessageAt: true,
-        assignedTo: {
-          select: { id: true, name: true },
-        },
-        whatsAppMessages: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: {
-            id: true,
-            content: true,
-            direction: true,
-            status: true,
-            createdAt: true,
+  let conversationsRaw: Array<{
+    id: string;
+    referenceId: string;
+    fullName: string;
+    phone: string;
+    city: string | null;
+    status: string;
+    totalDebtRange: string | null;
+    harassmentLevel: string | null;
+    legalIssue: string;
+    unreadCount: number;
+    lastMessageAt: Date;
+    assignedTo: { id: string; name: string } | null;
+    whatsAppMessages: Array<{
+      id: string;
+      content: string;
+      direction: string;
+      status: string;
+      createdAt: Date;
+    }>;
+  }> = [];
+  let staffMembers: Array<{ id: string; name: string; role: string }> = [];
+
+  try {
+    const [cRaw, sMembers] = await Promise.all([
+      prisma.lead.findMany({
+        orderBy: { lastMessageAt: "desc" },
+        take: 60,
+        select: {
+          id: true,
+          referenceId: true,
+          fullName: true,
+          phone: true,
+          city: true,
+          status: true,
+          totalDebtRange: true,
+          harassmentLevel: true,
+          legalIssue: true,
+          unreadCount: true,
+          lastMessageAt: true,
+          assignedTo: {
+            select: { id: true, name: true },
+          },
+          whatsAppMessages: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: {
+              id: true,
+              content: true,
+              direction: true,
+              status: true,
+              createdAt: true,
+            },
           },
         },
-      },
-    }),
-    prisma.user.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, role: true },
-    }),
-  ]);
+      }),
+      prisma.user.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, role: true },
+      }),
+    ]);
+    conversationsRaw = cRaw;
+    staffMembers = sMembers;
+  } catch (err) {
+    console.warn("Database query notice in AdminWhatsAppPage (database may still be initializing):", err);
+  }
 
   const initialConversations: ConversationItem[] = conversationsRaw.map((c) => ({
     id: c.id,

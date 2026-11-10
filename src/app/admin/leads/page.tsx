@@ -11,22 +11,53 @@ export default async function AdminLeadsPage() {
     redirect("/admin/login");
   }
 
-  const [leadsRaw, total, staffMembers] = await Promise.all([
-    prisma.lead.findMany({
-      take: 50,
-      orderBy: { updatedAt: "desc" },
-      include: {
-        assignedTo: {
-          select: { id: true, name: true, email: true, role: true },
+  let leadsRaw: Array<{
+    id: string;
+    referenceId: string;
+    fullName: string;
+    phone: string;
+    email: string | null;
+    city: string | null;
+    source: string;
+    legalIssue: string;
+    lenders: string | null;
+    totalDebtRange: string | null;
+    overdueStatus: string | null;
+    harassmentLevel: string | null;
+    status: string;
+    assignedToId: string | null;
+    assignedTo: { id: string; name: string; email: string; role: string } | null;
+    nextFollowUpAt: Date | null;
+    unreadCount: number;
+    lastMessageAt: Date;
+    createdAt: Date;
+  }> = [];
+  let total = 0;
+  let staffMembers: Array<{ id: string; name: string; role: string }> = [];
+
+  try {
+    const [lRaw, tCount, sMembers] = await Promise.all([
+      prisma.lead.findMany({
+        take: 50,
+        orderBy: { updatedAt: "desc" },
+        include: {
+          assignedTo: {
+            select: { id: true, name: true, email: true, role: true },
+          },
         },
-      },
-    }),
-    prisma.lead.count(),
-    prisma.user.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, role: true },
-    }),
-  ]);
+      }),
+      prisma.lead.count(),
+      prisma.user.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, role: true },
+      }),
+    ]);
+    leadsRaw = lRaw;
+    total = tCount;
+    staffMembers = sMembers;
+  } catch (err) {
+    console.warn("Database query notice in AdminLeadsPage (database may still be initializing):", err);
+  }
 
   const initialLeads: LeadTableRow[] = leadsRaw.map((l) => ({
     id: l.id,
