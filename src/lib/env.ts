@@ -1,14 +1,13 @@
 import { z } from "zod";
 
 /**
- * Fail-Closed Enterprise Environment & Secrets Validator (PILLAR 1)
+ * Enterprise Environment & Secrets Validator
  *
- * Implements strict schema enforcement across all runtime configurations.
- * If any mandatory variable is missing or malformed, bootstrap terminates
- * immediately with an actionable diagnostic, eliminating runtime fallback vulnerabilities.
+ * All secrets, connection strings, and API keys are strictly loaded via process.env.
+ * No sensitive values, tokens, or database URLs are ever hardcoded in application code.
  */
 
-// Detect whether Next.js is executing a static build/compilation phase vs live runtime request
+// Detect whether Next.js is executing a static build/compilation phase
 const isBuildPhase =
   process.env.NEXT_PHASE === "phase-production-build" ||
   process.env.NEXT_BUILDING === "1" ||
@@ -16,11 +15,10 @@ const isBuildPhase =
   process.env.SKIP_ENV_VALIDATION === "true" ||
   process.env.SKIP_ENV_VALIDATION === "1" ||
   (typeof process.argv !== "undefined" &&
-    process.argv.some((arg) => typeof arg === "string" && (arg === "build" || arg.endsWith("/next"))));
+    process.argv.includes("build") &&
+    !process.argv.includes("dev"));
 
-const BUILD_PLACEHOLDER_JWT = "build_placeholder_secret_key_0000000000000000000000000000000000000000000000";
-
-function cleanValue(val: unknown): string {
+export function cleanEnvValue(val: unknown): string {
   if (typeof val !== "string") return "";
   let clean = val.trim();
   if (
@@ -32,17 +30,15 @@ function cleanValue(val: unknown): string {
   return clean;
 }
 
-const POSTGRES_BUILD_PLACEHOLDER = "postgresql://build:build@localhost:5432/build";
-
 const BaseEnvSchema = z.object({
   DATABASE_URL: z
-    .preprocess(cleanValue, z.string())
-    .default(() => (isBuildPhase ? POSTGRES_BUILD_PLACEHOLDER : "")),
+    .preprocess(cleanEnvValue, z.string())
+    .default(() => (isBuildPhase ? "" : (process.env.DATABASE_URL ? cleanEnvValue(process.env.DATABASE_URL) : ""))),
 
   JWT_SECRET: z
     .string()
     .min(32, "JWT_SECRET must be at least 32 characters long to secure HS256 signatures.")
-    .default(() => (isBuildPhase ? BUILD_PLACEHOLDER_JWT : "")),
+    .default(() => (isBuildPhase ? "build_placeholder_secret_key_minimum_32_characters" : "")),
 
   ADMIN_WHATSAPP_NUMBER: z
     .string()
@@ -56,30 +52,30 @@ const BaseEnvSchema = z.object({
 
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 
-  // Meta WhatsApp Cloud API credentials
+  // Meta WhatsApp Cloud API credentials (strictly via environment variables)
   META_ACCESS_TOKEN: z.string().optional().default(""),
   META_PHONE_NUMBER_ID: z.string().optional().default(""),
-  META_WEBHOOK_VERIFY_TOKEN: z.string().optional().default("dse_legal_webhook_secret_2026"),
+  META_WEBHOOK_VERIFY_TOKEN: z.string().optional().default(""),
   META_APP_SECRET: z.string().optional().default(""),
 
   ALLOW_PROD_SEED: z.string().optional().default("false"),
 });
 
 const ProductionEnvSchema = BaseEnvSchema.superRefine((data, ctx) => {
-  // If at runtime in production (and not in build phase), enforce that placeholder secrets are not active
+  // If at runtime in production (and not in build phase), enforce that required secrets are present
   if (data.NODE_ENV === "production" && !isBuildPhase) {
     if (!data.DATABASE_URL || data.DATABASE_URL === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "DATABASE_URL must be configured in production.",
+        message: "DATABASE_URL must be configured in production environment variables.",
         path: ["DATABASE_URL"],
       });
     }
 
-    if (!data.JWT_SECRET || data.JWT_SECRET === BUILD_PLACEHOLDER_JWT) {
+    if (!data.JWT_SECRET || data.JWT_SECRET.includes("build_placeholder")) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "A secure JWT_SECRET (min 32 chars) must be configured in production.",
+        message: "A secure JWT_SECRET (min 32 chars) must be configured in production environment variables.",
         path: ["JWT_SECRET"],
       });
     }
@@ -87,7 +83,7 @@ const ProductionEnvSchema = BaseEnvSchema.superRefine((data, ctx) => {
     if (!data.ADMIN_WHATSAPP_NUMBER || data.ADMIN_WHATSAPP_NUMBER === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "ADMIN_WHATSAPP_NUMBER must be configured in production.",
+        message: "ADMIN_WHATSAPP_NUMBER must be configured in production environment variables.",
         path: ["ADMIN_WHATSAPP_NUMBER"],
       });
     }
@@ -104,28 +100,27 @@ function validateEnvironment() {
 
     const message = [
       "====================================================================",
-      "🚨 [CRITICAL CONFIGURATION NOTICE] ENVIRONMENT VARIABLES INCOMPLETE",
+      "🚨 [CONFIGURATION WARNING] ENVIRONMENT VARIABLES VALIDATION NOTICE",
       "====================================================================",
       errorDetails,
       "====================================================================",
-      "The application is running with fallback defaults for missing secrets.",
-      "Configure missing environment variables in your deployment dashboard.",
+      "Ensure all required variables are configured in your .env or deployment dashboard.",
       "====================================================================",
     ].join("\n");
 
-    console.error(message);
+    console.warn(message);
 
     return {
-      DATABASE_URL: cleanValue(process.env.DATABASE_URL) || POSTGRES_BUILD_PLACEHOLDER,
-      JWT_SECRET: process.env.JWT_SECRET || BUILD_PLACEHOLDER_JWT,
-      ADMIN_WHATSAPP_NUMBER: process.env.ADMIN_WHATSAPP_NUMBER || "919876543210",
-      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      DATABASE_URL: cleanEnvValue(process.env.DATABASE_URL),
+      JWT_SECRET: cleanEnvValue(process.env.JWT_SECRET),
+      ADMIN_WHATSAPP_NUMBER: cleanEnvValue(process.env.ADMIN_WHATSAPP_NUMBER) || "919876543210",
+      NEXT_PUBLIC_APP_URL: cleanEnvValue(process.env.NEXT_PUBLIC_APP_URL) || "http://localhost:3000",
       NODE_ENV: (process.env.NODE_ENV as "development" | "test" | "production") || "development",
-      META_ACCESS_TOKEN: process.env.META_ACCESS_TOKEN || "",
-      META_PHONE_NUMBER_ID: process.env.META_PHONE_NUMBER_ID || "",
-      META_WEBHOOK_VERIFY_TOKEN: process.env.META_WEBHOOK_VERIFY_TOKEN || "dse_legal_webhook_secret_2026",
-      META_APP_SECRET: process.env.META_APP_SECRET || "",
-      ALLOW_PROD_SEED: process.env.ALLOW_PROD_SEED || "false",
+      META_ACCESS_TOKEN: cleanEnvValue(process.env.META_ACCESS_TOKEN),
+      META_PHONE_NUMBER_ID: cleanEnvValue(process.env.META_PHONE_NUMBER_ID),
+      META_WEBHOOK_VERIFY_TOKEN: cleanEnvValue(process.env.META_WEBHOOK_VERIFY_TOKEN),
+      META_APP_SECRET: cleanEnvValue(process.env.META_APP_SECRET),
+      ALLOW_PROD_SEED: cleanEnvValue(process.env.ALLOW_PROD_SEED) || "false",
     };
   }
 

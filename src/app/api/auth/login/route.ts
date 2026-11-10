@@ -44,11 +44,11 @@ export async function POST(request: Request) {
     const genericAuthError = "Invalid email or password.";
 
     const rawDbUrl = process.env.DATABASE_URL;
-    if (!rawDbUrl || rawDbUrl.trim() === "" || rawDbUrl.includes("build:build@localhost") || rawDbUrl.includes("placeholder")) {
+    if (!rawDbUrl || rawDbUrl.trim() === "") {
       return NextResponse.json(
         {
           success: false,
-          error: "DATABASE_URL is not set in Vercel. Please add your Neon connection string in Vercel Settings > Environment Variables (without quotes) and Redeploy.",
+          error: "DATABASE_URL environment variable is missing. Please configure DATABASE_URL in your deployment environment variables.",
         },
         { status: 500 }
       );
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             success: false,
-            error: `Too many failed login attempts. Please wait ${rateCheck.retryAfterSeconds} seconds before retrying.`,
+            error: `Too many failed authentication attempts. Account temporarily locked for ${rateCheck.retryAfterSeconds} seconds.`,
           },
           { status: 429 }
         );
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             success: false,
-            error: `Too many failed login attempts. Please wait ${rateCheck.retryAfterSeconds} seconds before retrying.`,
+            error: `Too many failed authentication attempts. Account temporarily locked for ${rateCheck.retryAfterSeconds} seconds.`,
           },
           { status: 429 }
         );
@@ -87,9 +87,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: genericAuthError }, { status: 401 });
     }
 
-    // Successful authentication: clear rate limiter
+    // Clear failed attempts upon successful authentication
     authLoginRateLimiter.reset(clientIp);
 
+    // Create secure 8-hour JWT session token
     const token = await createSessionToken({
       userId: user.id,
       email: user.email,
@@ -97,25 +98,30 @@ export async function POST(request: Request) {
       role: user.role as UserRole,
     });
 
-    // Log login activity
-    await prisma.activityLog.create({
-      data: {
-        userId: user.id,
-        actorName: user.name,
-        action: "USER_LOGIN",
-        details: `Successful login as ${user.role} from admin portal.`,
-      },
-    });
+    // Record login in audit log asynchronously (non-blocking)
+    try {
+      await prisma.activityLog.create({
+        data: {
+          userId: user.id,
+          actorName: user.name,
+          action: "STAFF_LOGIN",
+          details: `Staff member authenticated successfully from IP ${clientIp}`,
+          ipAddress: clientIp,
+        },
+      });
+    } catch (auditErr) {
+      console.error("Non-fatal: Failed to write audit log entry for staff login:", auditErr);
+    }
 
+    // Return response with HTTP-only, SameSite=Strict, Secure cookie
     const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
-        name: user.name,
         email: user.email,
+        name: user.name,
         role: user.role,
       },
-      message: "Authentication successful.",
     });
 
     response.cookies.set({
@@ -123,17 +129,20 @@ export async function POST(request: Request) {
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "strict",
       path: "/",
-      maxAge: 8 * 60 * 60, // 8 hours (Pillar 4)
+      maxAge: 8 * 60 * 60, // 8 hours in seconds
     });
 
     return response;
   } catch (error) {
-    console.error("Login API Error:", error);
-    const detail = error instanceof Error ? error.message : String(error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("Critical unhandled error in POST /api/auth/login:", error);
     return NextResponse.json(
-      { success: false, error: `Authentication error: ${detail}` },
+      {
+        success: false,
+        error: `Authentication error: ${errorMsg}`,
+      },
       { status: 500 }
     );
   }

@@ -4,10 +4,12 @@ import { cookies } from "next/headers";
 import { env } from "@/lib/env";
 
 function getSecretKey(): Uint8Array {
-  const secret =
-    process.env.JWT_SECRET ||
-    (typeof env !== "undefined" ? env.JWT_SECRET : "") ||
-    "dse_fallback_dev_secret_key_minimum_32_characters";
+  const secret = (process.env.JWT_SECRET || (typeof env !== "undefined" ? env.JWT_SECRET : "")).trim();
+  if (!secret) {
+    throw new Error(
+      "CRITICAL: JWT_SECRET environment variable is missing. Please define JWT_SECRET in .env or your production environment settings."
+    );
+  }
   return new TextEncoder().encode(secret);
 }
 
@@ -39,7 +41,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 /**
- * Creates a signed JWT session token strictly valid for 8 hours (Pillar 4)
+ * Creates a signed JWT session token strictly valid for 8 hours
  */
 export async function createSessionToken(payload: SessionPayload): Promise<string> {
   return new SignJWT(payload)
