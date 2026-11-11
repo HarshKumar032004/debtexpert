@@ -19,6 +19,13 @@ export default async function AdminSettingsPage() {
 
   const staffUsersRaw = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
+    include: {
+      _count: {
+        select: {
+          leadsAssigned: true,
+        },
+      },
+    },
   });
 
   const staffUsers = staffUsersRaw.map((u) => ({
@@ -28,10 +35,11 @@ export default async function AdminSettingsPage() {
     role: u.role,
     isActive: u.isActive,
     createdAt: u.createdAt.toISOString(),
+    leadsAssignedCount: u._count.leadsAssigned,
   }));
 
   const configState = {
-    dbProvider: "SQLite (dev.db) / PostgreSQL Compatible",
+    dbProvider: "Neon Serverless PostgreSQL (AWS us-east-2)",
     hasMetaToken: Boolean(env.META_ACCESS_TOKEN),
     hasPhoneNumberId: Boolean(env.META_PHONE_NUMBER_ID),
     adminWhatsAppNumber: env.ADMIN_WHATSAPP_NUMBER,
@@ -41,6 +49,12 @@ export default async function AdminSettingsPage() {
 
   return (
     <SettingsView
+      currentUser={{
+        id: user.userId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      }}
       staffUsers={staffUsers}
       configState={configState}
     />

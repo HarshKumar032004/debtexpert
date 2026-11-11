@@ -2,28 +2,21 @@
 
 import * as React from "react";
 import {
-  Settings,
   ShieldCheck,
-  Users,
-  Database,
-  Lock,
   MessageSquare,
-  CheckCircle2,
-  AlertTriangle,
   Send,
-  Sparkles,
-  Terminal,
 } from "lucide-react";
+import { UserRole } from "@/lib/auth";
+import { UserManagement, StaffUserItem } from "@/components/admin/settings/user-management";
 
 interface SettingsViewProps {
-  staffUsers: Array<{
+  currentUser: {
     id: string;
     name: string;
     email: string;
-    role: string;
-    isActive: boolean;
-    createdAt: string;
-  }>;
+    role: UserRole;
+  };
+  staffUsers: StaffUserItem[];
   configState: {
     dbProvider: string;
     hasMetaToken: boolean;
@@ -34,7 +27,7 @@ interface SettingsViewProps {
   };
 }
 
-export function SettingsView({ staffUsers, configState }: SettingsViewProps) {
+export function SettingsView({ currentUser, staffUsers, configState }: SettingsViewProps) {
   const [testingWhatsApp, setTestingWhatsApp] = React.useState(false);
   const [testResult, setTestResult] = React.useState<string | null>(null);
 
@@ -62,14 +55,14 @@ export function SettingsView({ staffUsers, configState }: SettingsViewProps) {
       {/* Top Header */}
       <div>
         <h1 className="text-xl sm:text-2xl font-extrabold text-white">
-          Counsel Settings & System Health
+          Counsel Settings & Access Management
         </h1>
         <p className="text-xs sm:text-sm text-slate-400">
-          Inspect Meta WhatsApp Cloud API connectivity, advocate staff user permissions, and security parameters.
+          Super Administrator portal for staff credentials, RBAC authority, and Meta WhatsApp Cloud API status.
         </p>
       </div>
 
-      {/* Grid: Meta WhatsApp & Security */}
+      {/* Grid: Meta WhatsApp & Security Health Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Meta WhatsApp Cloud API Card */}
         <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
@@ -119,7 +112,7 @@ export function SettingsView({ staffUsers, configState }: SettingsViewProps) {
             <button
               onClick={handleTestWhatsApp}
               disabled={testingWhatsApp}
-              className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+              className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-50 active:scale-95"
             >
               <Send className="h-3.5 w-3.5 text-amber-400" />
               <span>{testingWhatsApp ? "Dispatching..." : "Send Test Lead Alert"}</span>
@@ -151,78 +144,25 @@ export function SettingsView({ staffUsers, configState }: SettingsViewProps) {
             </div>
             <div className="flex justify-between py-1 border-b border-slate-800/60">
               <span className="text-slate-400">Session Cookie:</span>
-              <span className="font-mono text-emerald-400 font-bold">HttpOnly, SameSite=Lax (7 Days)</span>
+              <span className="font-mono text-emerald-400 font-bold">HttpOnly, SameSite=Strict (8h)</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-800/60">
               <span className="text-slate-400">Bot Honeypot Protection:</span>
               <span className="font-mono text-emerald-400 font-bold">Enabled (Silent Drop)</span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-slate-400">IP Rate Limiter:</span>
-              <span className="font-mono text-slate-300">Max 15 Requests / Minute</span>
+              <span className="text-slate-400">Password Hashing:</span>
+              <span className="font-mono text-emerald-400 font-bold">Bcrypt (Salt Rounds: 10)</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Staff User Roster Table */}
-      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Users className="h-5 w-5 text-amber-400" />
-            <div>
-              <h2 className="text-sm font-bold text-white">Authorized Counsel & Staff Accounts</h2>
-              <p className="text-[11px] text-slate-400">
-                Role-based access control protecting all case files and client records
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950/60 text-slate-400 border-b border-slate-800 uppercase tracking-wider text-[10px]">
-              <tr>
-                <th className="px-4 py-3 font-bold">Counsel Name</th>
-                <th className="px-4 py-3 font-bold">Email</th>
-                <th className="px-4 py-3 font-bold">RBAC Role</th>
-                <th className="px-4 py-3 font-bold">Status</th>
-                <th className="px-4 py-3 font-bold">Account Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/80">
-              {staffUsers.map((staff) => (
-                <tr key={staff.id} className="hover:bg-slate-800/30">
-                  <td className="px-4 py-3 font-bold text-slate-200">{staff.name}</td>
-                  <td className="px-4 py-3 font-mono text-slate-400">{staff.email}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
-                        staff.role === "SUPER_ADMIN"
-                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                          : staff.role === "LEGAL_ADVISOR"
-                          ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                          : "bg-slate-800 text-slate-300 border border-slate-700"
-                      }`}
-                    >
-                      {staff.role.replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
-                      <CheckCircle2 className="h-3 w-3" />
-                      <span>Active</span>
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">
-                    {new Date(staff.createdAt).toLocaleDateString("en-IN")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Interactive User & Access Management Module */}
+      <UserManagement
+        currentUser={currentUser}
+        initialStaffUsers={staffUsers}
+      />
     </div>
   );
 }

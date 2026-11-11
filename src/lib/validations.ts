@@ -156,3 +156,54 @@ export const WhatsAppSendSchema = z
   });
 
 export type WhatsAppSendInput = z.infer<typeof WhatsAppSendSchema>;
+
+// 6. User Management & Access Control Contracts
+export const CreateUserSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Name must be at least 2 characters")
+      .max(100, "Name cannot exceed 100 characters")
+      .transform((val) => sanitizeHtml(val)),
+    email: z
+      .string()
+      .trim()
+      .email("Please provide a valid advocate email address.")
+      .max(120, "Email cannot exceed 120 characters")
+      .transform((val) => val.toLowerCase()),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(100, "Password length cannot exceed 100 characters"),
+    role: z.enum(["SUPER_ADMIN", "LEGAL_ADVISOR", "SUPPORT_AGENT"]),
+  })
+  .strict();
+
+export type CreateUserInput = z.infer<typeof CreateUserSchema>;
+
+export const UpdateUserSchema = z
+  .object({
+    role: z.enum(["SUPER_ADMIN", "LEGAL_ADVISOR", "SUPPORT_AGENT"]).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .strict()
+  .refine((data) => data.role !== undefined || data.isActive !== undefined, {
+    message: "At least one field (role or isActive) must be provided to update.",
+  });
+
+export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
+
+// 7. Self-Service Password Change Contract
+export const ChangePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .min(8, "New password must be at least 8 characters")
+      .max(100, "New password cannot exceed 100 characters"),
+  })
+  .strict();
+
+export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
+
