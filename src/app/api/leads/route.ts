@@ -182,7 +182,47 @@ export async function POST(request: Request) {
 
       console.log(`♻️ Active Lead updated for +${normalizedPhone} (Ref: ${leadRecord.referenceId})`);
     } else {
-      // 5. Create Brand New Lead
+      // 5. Check Lead Auto-Assignment Setting (Round-Robin Least-Loaded-Agent)
+      let assignedCounsel: { id: string; name: string; role: string } | null = null;
+      try {
+        const autoAssignSetting = await prisma.systemSetting.findUnique({
+          where: { key: "AUTO_ASSIGN_LEADS" },
+        });
+
+        if (autoAssignSetting?.value === "true") {
+          // Priority 1: Least-loaded active SUPPORT_AGENT
+          let candidate = await prisma.user.findFirst({
+            where: { role: "SUPPORT_AGENT", isActive: true },
+            orderBy: {
+              leadsAssigned: {
+                _count: "asc",
+              },
+            },
+            select: { id: true, name: true, role: true },
+          });
+
+          // Priority 2: Fallback to least-loaded active LEGAL_ADVISOR
+          if (!candidate) {
+            candidate = await prisma.user.findFirst({
+              where: { role: "LEGAL_ADVISOR", isActive: true },
+              orderBy: {
+                leadsAssigned: {
+                  _count: "asc",
+                },
+              },
+              select: { id: true, name: true, role: true },
+            });
+          }
+
+          if (candidate) {
+            assignedCounsel = candidate;
+          }
+        }
+      } catch (assignErr) {
+        console.warn("Auto-assignment query notice:", assignErr);
+      }
+
+      // Create Brand New Lead
       const referenceId = generateReferenceId();
 
       leadRecord = await prisma.lead.create({
@@ -204,6 +244,7 @@ export async function POST(request: Request) {
           preferredCallbackTime: preferredCallbackTime || null,
           message: message?.trim() || null,
           status: "NEW",
+          assignedToId: assignedCounsel?.id || null,
           unreadCount: 1,
           lastMessageAt: new Date(),
           consentGiven: true,
@@ -221,6 +262,24 @@ export async function POST(request: Request) {
           ipAddress: clientIp,
         },
       });
+
+      // Log Auto-Assignment in ActivityLog if assigned
+      if (assignedCounsel) {
+        try {
+          await prisma.activityLog.create({
+            data: {
+              leadId: leadRecord.id,
+              actorName: "Auto-Assignment Engine",
+              action: "LEAD_AUTO_ASSIGNED",
+              details: `Lead automatically routed to ${assignedCounsel.name} (${assignedCounsel.role.replace("_", " ")}) via Least-Loaded-Agent algorithm.`,
+              ipAddress: clientIp,
+            },
+          });
+          console.log(`🤖 Auto-assigned lead ${referenceId} to ${assignedCounsel.name}`);
+        } catch (assignLogErr) {
+          console.warn("Failed to write auto-assignment activity log:", assignLogErr);
+        }
+      }
 
       console.log(`📁 New Case File created: ${referenceId} for ${fullName} (+${normalizedPhone})`);
 

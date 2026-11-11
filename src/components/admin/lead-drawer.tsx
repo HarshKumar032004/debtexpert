@@ -189,6 +189,20 @@ export function LeadDrawer({
     setSubmittingNote(true);
     const content = newNote.trim();
 
+    // Sub-50ms Optimistic Note Update
+    const tempNote = {
+      id: `temp_${Date.now()}`,
+      authorName: "You (Advocate Desk)",
+      content,
+      createdAt: new Date().toISOString(),
+    };
+
+    setLead({
+      ...lead,
+      notes: [tempNote, ...(lead.notes || [])],
+    });
+    setNewNote("");
+
     try {
       const res = await fetch(`/api/admin/leads/${lead.id}/notes`, {
         method: "POST",
@@ -198,14 +212,24 @@ export function LeadDrawer({
       const data = await res.json();
 
       if (data.success && data.note) {
-        setLead({
-          ...lead,
-          notes: [data.note, ...(lead.notes || [])],
+        setLead((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            notes: (prev.notes || []).map((n) => (n.id === tempNote.id ? data.note : n)),
+          };
         });
-        setNewNote("");
       }
     } catch (err) {
       console.error("Error creating note:", err);
+      // Revert optimistic note on network failure
+      setLead((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          notes: (prev.notes || []).filter((n) => n.id !== tempNote.id),
+        };
+      });
     } finally {
       setSubmittingNote(false);
     }

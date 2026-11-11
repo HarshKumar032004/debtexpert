@@ -207,3 +207,46 @@ export const ChangePasswordSchema = z
 
 export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
 
+
+// 8. WhatsApp Quick-Reply Template Contracts
+export const WhatsAppTemplateSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(2, "Template title must be at least 2 characters")
+      .max(100, "Template title cannot exceed 100 characters"),
+    content: z
+      .string()
+      .trim()
+      .min(5, "Template content must be at least 5 characters")
+      .max(3000, "Template content cannot exceed 3000 characters"),
+    isActive: z.boolean().optional().default(true),
+  })
+  .strict();
+
+export type WhatsAppTemplateInput = z.infer<typeof WhatsAppTemplateSchema>;
+
+export const UpdateWhatsAppTemplateSchema = z
+  .object({
+    title: z.string().trim().min(2).max(100).optional(),
+    content: z.string().trim().min(5).max(3000).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .strict()
+  .refine(
+    (data) => data.title !== undefined || data.content !== undefined || data.isActive !== undefined,
+    { message: "At least one field (title, content, or isActive) must be provided to update." }
+  );
+
+export type UpdateWhatsAppTemplateInput = z.infer<typeof UpdateWhatsAppTemplateSchema>;
+
+// 9. System Setting Contracts
+export const SystemSettingUpdateSchema = z
+  .object({
+    key: z.string().trim().min(1, "Setting key is required"),
+    value: z.string().trim().min(1, "Setting value is required"),
+  })
+  .strict();
+
+export type SystemSettingUpdateInput = z.infer<typeof SystemSettingUpdateSchema>;

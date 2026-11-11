@@ -115,8 +115,15 @@ export function LeadsTableView({
     }
   }, [search, statusFilter, issueFilter, harassmentOnly]);
 
+  // Avoid redundant fetch on initial mount since SSR provides initialLeads
+  const isFirstMount = React.useRef(true);
+
   // Debounced search trigger
   React.useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const timer = setTimeout(() => {
       fetchFilteredLeads();
     }, 250);
@@ -152,11 +159,23 @@ export function LeadsTableView({
     window.open(`/api/admin/leads/export?${params.toString()}`, "_blank");
   };
 
-  // Filter by priority locally
+  // Filter by search & priority locally for instant responsive UI
   const displayLeads = React.useMemo(() => {
-    if (priorityFilter === "ALL") return leads;
-    return leads.filter((l) => calculateLeadScore(l).tier === priorityFilter);
-  }, [leads, priorityFilter]);
+    let result = leads;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(
+        (l) =>
+          l.fullName?.toLowerCase().includes(q) ||
+          l.phone?.includes(q) ||
+          l.referenceId?.toLowerCase().includes(q) ||
+          (l.city && l.city.toLowerCase().includes(q)) ||
+          (l.lenders && l.lenders.toLowerCase().includes(q))
+      );
+    }
+    if (priorityFilter === "ALL") return result;
+    return result.filter((l) => calculateLeadScore(l).tier === priorityFilter);
+  }, [leads, search, priorityFilter]);
 
   const openDrawer = (leadId: string) => {
     setSelectedLeadId(leadId);
@@ -308,7 +327,7 @@ export function LeadsTableView({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/80">
-              {loading ? (
+              {loading && leads.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-slate-500">
                     <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-amber-400" />

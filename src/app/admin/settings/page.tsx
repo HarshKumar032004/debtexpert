@@ -17,16 +17,24 @@ export default async function AdminSettingsPage() {
     redirect("/admin");
   }
 
-  const staffUsersRaw = await prisma.user.findMany({
-    orderBy: { createdAt: "asc" },
-    include: {
-      _count: {
-        select: {
-          leadsAssigned: true,
+  const [staffUsersRaw, templatesRaw, autoAssignSetting] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: { createdAt: "asc" },
+      include: {
+        _count: {
+          select: {
+            leadsAssigned: true,
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.whatsAppTemplate.findMany({
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.systemSetting.findUnique({
+      where: { key: "AUTO_ASSIGN_LEADS" },
+    }),
+  ]);
 
   const staffUsers = staffUsersRaw.map((u) => ({
     id: u.id,
@@ -37,6 +45,17 @@ export default async function AdminSettingsPage() {
     createdAt: u.createdAt.toISOString(),
     leadsAssignedCount: u._count.leadsAssigned,
   }));
+
+  const templates = templatesRaw.map((t) => ({
+    id: t.id,
+    title: t.title,
+    content: t.content,
+    isActive: t.isActive,
+    createdAt: t.createdAt.toISOString(),
+    updatedAt: t.updatedAt.toISOString(),
+  }));
+
+  const autoAssignLeads = autoAssignSetting?.value === "true";
 
   const configState = {
     dbProvider: "Neon Serverless PostgreSQL (AWS us-east-2)",
@@ -56,6 +75,8 @@ export default async function AdminSettingsPage() {
         role: user.role,
       }}
       staffUsers={staffUsers}
+      templates={templates}
+      autoAssignLeads={autoAssignLeads}
       configState={configState}
     />
   );

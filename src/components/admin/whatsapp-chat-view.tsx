@@ -87,6 +87,48 @@ export function WhatsAppChatView({
   // Scroll ref
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
+  // Dynamic Quick-Reply Templates
+  const [quickTemplates, setQuickTemplates] = React.useState<Array<{ id: string; title: string; content: string }>>([
+    {
+      id: "fallback_1",
+      title: "📋 Document Checklist",
+      content: "Kindly share your loan sanction letters, latest statement of accounts, and any collection notices you have received.",
+    },
+    {
+      id: "fallback_2",
+      title: "⏰ Working Hours",
+      content: "Our legal team is available Mon–Fri, 9 AM – 5 PM IST. Our senior advocate panel is actively auditing your loan portfolio.",
+    },
+    {
+      id: "fallback_3",
+      title: "⚖️ Notice Audit",
+      content: "Please send a clear photo or PDF of the legal notice / Section 138 demand letter you received so our advocate can inspect the statutory timelines.",
+    },
+    {
+      id: "fallback_4",
+      title: "🛑 Direct Payment Warning",
+      content: "CRITICAL WARNING: Never pay any recovery agent via personal UPI or cash. All legitimate settlement payments are made directly to the bank account against a verified OTS sanction letter.",
+    },
+  ]);
+
+  React.useEffect(() => {
+    async function fetchTemplates() {
+      try {
+        const res = await fetch("/api/admin/templates?activeOnly=true");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.templates) && data.templates.length > 0) {
+            setQuickTemplates(data.templates);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load dynamic templates, using default legal quick-replies:", err);
+      }
+    }
+    fetchTemplates();
+  }, []);
+
+
   // Active Lead Object
   const activeConversation = React.useMemo(() => {
     return conversations.find((c) => c.id === activeLeadId) || null;
@@ -104,7 +146,13 @@ export function WhatsAppChatView({
       const res = await fetch(`/api/admin/whatsapp/messages?leadId=${leadId}`);
       const data = await res.json();
       if (data.success && data.messages) {
-        setMessages(data.messages);
+        setMessages((prev) => {
+          // Retain any pending optimistic messages that haven't been reconciled yet
+          const pendingOptimistic = prev.filter(
+            (m) => m.id.startsWith("temp_") && m.leadId === leadId
+          );
+          return [...data.messages, ...pendingOptimistic];
+        });
         // Clear unread badge in local state
         setConversations((prev) =>
           prev.map((c) => (c.id === leadId ? { ...c, unreadCount: 0 } : c))
@@ -188,9 +236,14 @@ export function WhatsAppChatView({
       const data = await res.json();
       if (data.success && data.message) {
         // Replace temp optimistic message with real DB message
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? data.message : m))
-        );
+        setMessages((prev) => {
+          const hasTemp = prev.some((m) => m.id === tempId);
+          if (hasTemp) {
+            return prev.map((m) => (m.id === tempId ? data.message : m));
+          }
+          const alreadyHas = prev.some((m) => m.id === data.message.id);
+          return alreadyHas ? prev : [...prev, data.message];
+        });
       }
     } catch (err) {
       console.error("Error sending WhatsApp message:", err);
@@ -500,7 +553,7 @@ export function WhatsAppChatView({
 
           {/* Message Thread Body */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-            {loadingMessages ? (
+            {loadingMessages && messages.length === 0 ? (
               <div className="text-center py-12 text-slate-500 text-xs">
                 Loading encrypted legal transcripts...
               </div>
@@ -584,53 +637,20 @@ export function WhatsAppChatView({
               Quick Replies:
             </span>
 
-            <button
-              type="button"
-              onClick={() =>
-                setInputText(
-                  "Kindly share your loan sanction letters, latest statement of accounts, and any collection notices you have received."
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-medium whitespace-nowrap text-[11px] border border-slate-700 transition-colors"
-            >
-              📋 Document Checklist
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setInputText(
-                  "Our legal team is available Mon–Fri, 9 AM – 5 PM IST. Our senior advocate panel is actively auditing your loan portfolio."
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-medium whitespace-nowrap text-[11px] border border-slate-700 transition-colors"
-            >
-              ⏰ Working Hours
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setInputText(
-                  "Please send a clear photo or PDF of the legal notice / Section 138 demand letter you received so our advocate can inspect the statutory timelines."
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-medium whitespace-nowrap text-[11px] border border-slate-700 transition-colors"
-            >
-              ⚖️ Notice Audit
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setInputText(
-                  "CRITICAL WARNING: Never pay any recovery agent via personal UPI or cash. All legitimate settlement payments are made directly to the bank account against a verified OTS sanction letter."
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-red-950/50 hover:bg-red-900/60 text-red-200 font-bold whitespace-nowrap text-[11px] border border-red-900 transition-colors"
-            >
-              🛑 Direct Payment Warning
-            </button>
+            {quickTemplates.map((tmpl) => (
+              <button
+                key={tmpl.id}
+                type="button"
+                onClick={() => setInputText(tmpl.content)}
+                className={`px-2.5 py-1 rounded-lg font-medium whitespace-nowrap text-[11px] border transition-colors ${
+                  tmpl.title.includes("Warning") || tmpl.title.includes("Direct Payment")
+                    ? "bg-red-950/50 hover:bg-red-900/60 text-red-200 border-red-900"
+                    : "bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-700"
+                }`}
+              >
+                {tmpl.title}
+              </button>
+            ))}
           </div>
 
           {/* Composer Box */}

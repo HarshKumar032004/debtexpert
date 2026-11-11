@@ -2,6 +2,62 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 import { env } from "@/lib/env";
 
+export async function seedTemplatesAndSettings() {
+  try {
+    // 1. Ensure AUTO_ASSIGN_LEADS setting exists
+    const existingAutoAssign = await prisma.systemSetting.findUnique({
+      where: { key: "AUTO_ASSIGN_LEADS" },
+    });
+    if (!existingAutoAssign) {
+      await prisma.systemSetting.create({
+        data: {
+          key: "AUTO_ASSIGN_LEADS",
+          value: "false",
+        },
+      });
+      console.log("⚙️ Seeded default system setting: AUTO_ASSIGN_LEADS = 'false'");
+    }
+
+    // 2. Ensure WhatsApp Templates exist
+    const templateCount = await prisma.whatsAppTemplate.count();
+    if (templateCount === 0) {
+      const defaultTemplates = [
+        {
+          title: "📋 Document Checklist",
+          content:
+            "Kindly share your loan sanction letters, latest statement of accounts, and any collection notices you have received.",
+          isActive: true,
+        },
+        {
+          title: "⏰ Working Hours",
+          content:
+            "Our legal team is available Mon–Fri, 9 AM – 5 PM IST. Our senior advocate panel is actively auditing your loan portfolio.",
+          isActive: true,
+        },
+        {
+          title: "⚖️ Notice Audit",
+          content:
+            "Please send a clear photo or PDF of the legal notice / Section 138 demand letter you received so our advocate can inspect the statutory timelines.",
+          isActive: true,
+        },
+        {
+          title: "🛑 Direct Payment Warning",
+          content:
+            "CRITICAL WARNING: Never pay any recovery agent via personal UPI or cash. All legitimate settlement payments are made directly to the bank account against a verified OTS sanction letter.",
+          isActive: true,
+        },
+      ];
+
+      for (const t of defaultTemplates) {
+        await prisma.whatsAppTemplate.create({ data: t });
+      }
+      console.log("📱 Seeded 4 default legal WhatsApp quick-reply templates.");
+    }
+  } catch (err) {
+    console.warn("Notice: Error ensuring default templates/settings:", err);
+  }
+}
+
 export async function seedDatabaseIfNeeded() {
   try {
     // Defensive check: Disable automatic cold-start seeding in production unless explicitly opted in (Pillar 6)
@@ -9,10 +65,14 @@ export async function seedDatabaseIfNeeded() {
       return { seeded: false, message: "Automated cold-start seeding disabled in production environment." };
     }
 
+    // Ensure system settings & templates are populated
+    await seedTemplatesAndSettings();
+
     const existingUsers = await prisma.user.count();
     if (existingUsers > 0) {
       return { seeded: false, message: "Database already contains users." };
     }
+
 
     console.log("🌱 Database is empty. Commencing automated CRM initialization & seed...");
 
