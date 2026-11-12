@@ -15,7 +15,9 @@ import {
   TrendingDown,
   AlertCircle,
   FileCheck2,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { siteConfig } from "@/config/site";
 import { formatINR } from "@/lib/utils";
 import { AnimatedCounter } from "@/components/animations/motion-wrappers";
@@ -100,31 +102,38 @@ export function HeroSection() {
 
     setLoading(true);
 
-    const result = await submitLead({
-      fullName,
-      phone: validation.cleaned,
-      city: city || "India",
-      totalDebt: activeDebtLabel,
-      loanType: activeIssueLabel,
-      source: "hero-quick-form",
-      website: honeypot || undefined,
-      facingHarassment:
-        selectedIssue === "harassment" || selectedIssue === "legal-notice",
-    });
-
-    setLoading(false);
-
-    if (result.success) {
-      setModalData({
-        isOpen: true,
-        referenceId: result.referenceId,
-        whatsappUrl: result.whatsappUrl,
+    try {
+      const result = await submitLead({
+        fullName,
+        phone: validation.cleaned,
+        city: city || "India",
+        totalDebt: activeDebtLabel,
+        loanType: activeIssueLabel,
+        source: "hero-quick-form",
+        website: honeypot || undefined,
+        facingHarassment:
+          selectedIssue === "harassment" || selectedIssue === "legal-notice",
       });
-      setSubmitted(true);
-    } else {
-      setPhoneError(
-        result.error || "Failed to submit case file. Please try again."
-      );
+
+      if (result.success) {
+        toast.success(`Application submitted successfully. Your Reference ID is #${result.referenceId}.`);
+        setModalData({
+          isOpen: true,
+          referenceId: result.referenceId,
+          whatsappUrl: result.whatsappUrl,
+        });
+        setSubmitted(true);
+      } else {
+        const err = result.error || "Failed to submit case file. Please try again.";
+        toast.error(err);
+        setPhoneError(err);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Network error. Please try again.";
+      toast.error(msg);
+      setPhoneError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -481,7 +490,10 @@ export function HeroSection() {
                       className="w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 hover:from-primary-700 hover:to-blue-800 shadow-md shadow-primary-600/25 active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
                     >
                       {loading ? (
-                        <span>Analyzing Case Details...</span>
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <span>Analyzing Case Details...</span>
+                        </>
                       ) : (
                         <>
                           <ShieldCheck className="h-4 w-4 text-amber-300" />

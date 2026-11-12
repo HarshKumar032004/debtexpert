@@ -14,6 +14,7 @@ import {
   X,
   RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { LeadDrawer, LeadDetailData } from "@/components/admin/lead-drawer";
 import { calculateLeadScore, LeadScoreResult } from "@/lib/lead-scoring";
 
@@ -130,24 +131,44 @@ export function LeadsTableView({
 
   // Handle instant status change
   const handleUpdateStatus = async (leadId: string, newStatus: string) => {
+    const prevLead = leads.find((l) => l.id === leadId);
+    const prevStatus = prevLead?.status;
+
     // Optimistic UI update
     setLeads((prev) =>
       prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
     );
 
     try {
-      await fetch(`/api/admin/leads/${leadId}`, {
+      const res = await fetch(`/api/admin/leads/${leadId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      if (!res.ok) {
+        if (prevStatus) {
+          setLeads((prev) =>
+            prev.map((l) => (l.id === leadId ? { ...l, status: prevStatus } : l))
+          );
+        }
+        toast.error("Failed to update lead status");
+      } else {
+        toast.success(`Lead status updated to ${newStatus}`);
+      }
     } catch (e) {
       console.error("Error updating status:", e);
+      if (prevStatus) {
+        setLeads((prev) =>
+          prev.map((l) => (l.id === leadId ? { ...l, status: prevStatus } : l))
+        );
+      }
+      toast.error("Failed to update lead status");
     }
   };
 
   // Open CSV export in new tab
   const handleExportCsv = () => {
+    toast.info("Preparing CSV export...");
     const params = new URLSearchParams();
     if (search.trim()) params.set("search", search.trim());
     if (statusFilter !== "ALL") params.set("status", statusFilter);

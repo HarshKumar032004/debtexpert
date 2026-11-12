@@ -21,7 +21,9 @@ import {
   Clock,
   Award,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { submitLead, validateIndianPhone } from "@/lib/lead";
 import { formatINR } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
@@ -179,32 +181,43 @@ export function EligibilityWizard() {
 
     const validation = validateIndianPhone(phone);
     if (!validation.isValid) {
-      setPhoneError(validation.error || "Please enter a valid 10-digit mobile number");
+      const err = validation.error || "Please enter a valid 10-digit mobile number";
+      setPhoneError(err);
+      toast.error(err);
       return;
     }
 
     setIsSubmitting(true);
 
-    const result = await submitLead({
-      fullName: fullName.trim() || "Borrower",
-      phone: validation.cleaned,
-      city: city.trim() || "India",
-      loanType: debtType,
-      totalDebt,
-      banks: selectedLenders.join(", "),
-      message: `Overdue: ${overdueStatus} | Biggest Worry: ${biggestWorry} | Readiness: ${readiness} | Rec: ${recommendation.strategyTitle}`,
-      source: "eligibility-wizard-60sec",
-    });
+    try {
+      const result = await submitLead({
+        fullName: fullName.trim() || "Borrower",
+        phone: validation.cleaned,
+        city: city.trim() || "India",
+        loanType: debtType,
+        totalDebt,
+        banks: selectedLenders.join(", "),
+        message: `Overdue: ${overdueStatus} | Biggest Worry: ${biggestWorry} | Readiness: ${readiness} | Rec: ${recommendation.strategyTitle}`,
+        source: "eligibility-wizard-60sec",
+      });
 
-    setIsSubmitting(false);
-
-    if (result.success) {
-      setReferenceId(result.referenceId);
-      setWhatsappUrl(result.whatsappUrl);
-      setCaseSubmitted(true);
-      setPreviewUnlocked(true);
-    } else {
-      setPhoneError(result.error || "Failed to submit assessment.");
+      if (result.success) {
+        setReferenceId(result.referenceId);
+        setWhatsappUrl(result.whatsappUrl);
+        setCaseSubmitted(true);
+        setPreviewUnlocked(true);
+        toast.success(`Assessment submitted! Case Reference: #${result.referenceId}`);
+      } else {
+        const err = result.error || "Failed to submit assessment.";
+        setPhoneError(err);
+        toast.error(err);
+      }
+    } catch (err: any) {
+      const errMessage = err?.message || "Failed to submit assessment. Please try again.";
+      setPhoneError(errMessage);
+      toast.error(errMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -715,7 +728,10 @@ export function EligibilityWizard() {
                       className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 hover:from-primary-700 hover:to-blue-800 shadow-md shadow-primary-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
                     >
                       {isSubmitting ? (
-                        <span>Generating Case File...</span>
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+                          <span>Generating Case File...</span>
+                        </>
                       ) : (
                         <>
                           <ShieldCheck className="h-4 w-4 text-amber-300" />

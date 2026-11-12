@@ -21,7 +21,9 @@ import {
   Sparkles,
   DollarSign,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { calculateLeadScore, LeadScoreResult } from "@/lib/lead-scoring";
 
 export interface LeadDetailData {
@@ -156,9 +158,13 @@ export function LeadDrawer({
       });
       if (!res.ok) {
         setLead({ ...lead, status: prevStatus });
+        toast.error("Failed to update lead status");
+      } else {
+        toast.success(`Lead status updated to ${newStatus}`);
       }
     } catch {
       setLead({ ...lead, status: prevStatus });
+      toast.error("Failed to update lead status");
     } finally {
       setStatusUpdating(false);
     }
@@ -171,13 +177,19 @@ export function LeadDrawer({
     setLead({ ...lead, assignedToId: advisorId, assignedTo: selectedAdvisor });
 
     try {
-      await fetch(`/api/admin/leads/${lead.id}`, {
+      const res = await fetch(`/api/admin/leads/${lead.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assignedToId: advisorId }),
       });
+      if (!res.ok) {
+        toast.error("Failed to reassign lead");
+      } else {
+        toast.success("Lead reassigned successfully");
+      }
     } catch (e) {
       console.error(e);
+      toast.error("Failed to reassign lead");
     }
   };
 
@@ -219,6 +231,9 @@ export function LeadDrawer({
             notes: (prev.notes || []).map((n) => (n.id === tempNote.id ? data.note : n)),
           };
         });
+        toast.success("Note added successfully");
+      } else {
+        toast.error(data.error || "Failed to add note");
       }
     } catch (err) {
       console.error("Error creating note:", err);
@@ -230,6 +245,7 @@ export function LeadDrawer({
           notes: (prev.notes || []).filter((n) => n.id !== tempNote.id),
         };
       });
+      toast.error("Failed to add note");
     } finally {
       setSubmittingNote(false);
     }
@@ -260,9 +276,13 @@ export function LeadDrawer({
         setReminderDate("");
         setReminderNote("");
         if (onLeadUpdated) onLeadUpdated({ id: lead.id, nextFollowUpAt: scheduledAt });
+        toast.success("Follow-up reminder scheduled");
+      } else {
+        toast.error(data.error || "Failed to schedule reminder");
       }
     } catch (err) {
       console.error("Error scheduling reminder:", err);
+      toast.error("Failed to schedule reminder");
     } finally {
       setSubmittingReminder(false);
     }
@@ -294,9 +314,13 @@ export function LeadDrawer({
             r.id === reminderId ? { ...r, isCompleted: !currentStatus } : r
           ),
         });
+        toast.success(currentStatus ? "Reminder marked as pending" : "Reminder marked as completed");
+      } else {
+        toast.error("Failed to update reminder status");
       }
     } catch (e) {
       console.error(e);
+      toast.error("Failed to update reminder status");
     }
   };
 
@@ -327,6 +351,7 @@ export function LeadDrawer({
 
     const waUrl = `https://wa.me/${lead.phone}?text=${encodeURIComponent(proposalMessage)}`;
     window.open(waUrl, "_blank");
+    toast.success(`Fee proposal for ${planName} dispatched to WhatsApp`);
   };
 
   return (
@@ -706,8 +731,17 @@ export function LeadDrawer({
                     disabled={submittingNote || !newNote.trim()}
                     className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 disabled:opacity-50 transition-colors shadow-sm"
                   >
-                    <Send className="h-3 w-3" />
-                    <span>{submittingNote ? "Saving..." : "Add Internal Note"}</span>
+                    {submittingNote ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-3 w-3" />
+                        <span>Add Internal Note</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -795,9 +829,16 @@ export function LeadDrawer({
                   type="button"
                   onClick={() => handleScheduleReminder(reminderDate, reminderNote)}
                   disabled={submittingReminder || !reminderDate}
-                  className="w-full py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs disabled:opacity-50 transition-colors shadow-sm"
+                  className="w-full py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs disabled:opacity-50 transition-colors shadow-sm flex items-center justify-center gap-1.5"
                 >
-                  {submittingReminder ? "Scheduling..." : "Schedule Follow-Up Reminder"}
+                  {submittingReminder ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Scheduling...</span>
+                    </>
+                  ) : (
+                    "Schedule Follow-Up Reminder"
+                  )}
                 </button>
               </div>
 

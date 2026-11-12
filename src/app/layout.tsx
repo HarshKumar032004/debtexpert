@@ -7,6 +7,7 @@ import { PublicShell } from "@/components/layout/public-shell";
 import { OrganizationJsonLd } from "@/components/seo/json-ld";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Toaster } from "sonner";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -109,6 +110,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <PublicShell>{children}</PublicShell>
+          <Toaster position="bottom-right" richColors theme="system" expand={true} />
           <Analytics />
           <SpeedInsights />
         </ThemeProvider>

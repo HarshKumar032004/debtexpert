@@ -57,7 +57,7 @@ test.describe("ADMIN AUTHENTICATION & ZERO-TRUST SECURITY BOUNDARIES", () => {
     expect(response.status()).toBe(401);
 
     // Standardized generic error to prevent account enumeration
-    const errorAlert = page.locator("text=Invalid email or password.");
+    const errorAlert = page.locator("text=Invalid email or password.").first();
     await expect(errorAlert).toBeVisible();
   });
 

@@ -19,7 +19,9 @@ import {
   Video,
   FileText,
   UserCheck,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { siteConfig } from "@/config/site";
 import { submitLead, validateIndianPhone } from "@/lib/lead";
 import { CaseInitiatedModal } from "@/components/forms/case-initiated-modal";
@@ -172,42 +174,56 @@ export function ContactSplitLayout() {
     }
 
     if (!evalConsent) {
-      setConsentError("Please agree to receive case consultation updates.");
+      const err = "Please agree to receive case consultation updates.";
+      setConsentError(err);
+      toast.error(err);
       return;
     }
 
     const validation = validateIndianPhone(evalPhone);
     if (!validation.isValid) {
-      setPhoneError(validation.error || "Please enter a valid 10-digit mobile number");
+      const err = validation.error || "Please enter a valid 10-digit mobile number";
+      setPhoneError(err);
+      toast.error(err);
       return;
     }
 
     setStatus("submitting");
 
-    const result = await submitLead({
-      fullName: evalName,
-      phone: validation.cleaned,
-      email: evalEmail,
-      city: evalCity,
-      totalDebt: evalTotalDebt,
-      banks: selectedBanks.join(", "),
-      loanType: `Case Eval (Overdue: ${evalOverdue})`,
-      message: `Problems: ${selectedProblems.join(", ")} | Callback: ${evalCallbackTime}`,
-      source: "contact-case-evaluation",
-    });
-
-    setStatus("success");
-
-    if (result.success) {
-      setModalData({
-        isOpen: true,
-        referenceId: result.referenceId,
-        whatsappUrl: result.whatsappUrl,
-        submittedName: evalName,
-        submittedPhone: validation.cleaned,
+    try {
+      const result = await submitLead({
+        fullName: evalName,
+        phone: validation.cleaned,
+        email: evalEmail,
+        city: evalCity,
+        totalDebt: evalTotalDebt,
+        banks: selectedBanks.join(", "),
+        loanType: `Case Eval (Overdue: ${evalOverdue})`,
+        message: `Problems: ${selectedProblems.join(", ")} | Callback: ${evalCallbackTime}`,
+        source: "contact-case-evaluation",
       });
-    } else {
-      setPhoneError(result.error || "Failed to submit case file.");
+
+      setStatus("success");
+
+      if (result.success) {
+        setModalData({
+          isOpen: true,
+          referenceId: result.referenceId,
+          whatsappUrl: result.whatsappUrl,
+          submittedName: evalName,
+          submittedPhone: validation.cleaned,
+        });
+        toast.success(`Case submitted! Case Reference: #${result.referenceId}`);
+      } else {
+        const err = result.error || "Failed to submit case file.";
+        setPhoneError(err);
+        toast.error(err);
+      }
+    } catch (err: any) {
+      setStatus("idle");
+      const errMessage = err?.message || "Failed to submit case file. Please try again.";
+      setPhoneError(errMessage);
+      toast.error(errMessage);
     }
   };
 
@@ -217,6 +233,7 @@ export function ContactSplitLayout() {
     setConsentError(null);
 
     if (dateError) {
+      toast.error("Please select a valid weekday for consultation.");
       return;
     }
 
@@ -227,7 +244,9 @@ export function ContactSplitLayout() {
         const dateObj = new Date(year, month - 1, day);
         const dayOfWeek = dateObj.getDay();
         if (dayOfWeek === 0 || dayOfWeek === 6) {
-          setDateError("Advocate consultations are only held on weekdays (Monday to Friday). Please select a valid weekday.");
+          const err = "Advocate consultations are only held on weekdays (Monday to Friday). Please select a valid weekday.";
+          setDateError(err);
+          toast.error(err);
           return;
         }
       }
@@ -239,39 +258,53 @@ export function ContactSplitLayout() {
     }
 
     if (!bookConsent) {
-      setConsentError("Please agree to receive your consultation confirmation.");
+      const err = "Please agree to receive your consultation confirmation.";
+      setConsentError(err);
+      toast.error(err);
       return;
     }
 
     const validation = validateIndianPhone(bookPhone);
     if (!validation.isValid) {
-      setPhoneError(validation.error || "Please enter a valid 10-digit mobile number");
+      const err = validation.error || "Please enter a valid 10-digit mobile number";
+      setPhoneError(err);
+      toast.error(err);
       return;
     }
 
     setStatus("submitting");
 
-    const result = await submitLead({
-      fullName: bookName,
-      phone: validation.cleaned,
-      email: bookEmail,
-      loanType: `1-on-1 Consultation (${bookMode})`,
-      message: `Scheduled Slot: ${bookDate} at ${bookSlot}`,
-      source: "contact-book-consultation",
-    });
-
-    setStatus("success");
-
-    if (result.success) {
-      setModalData({
-        isOpen: true,
-        referenceId: result.referenceId,
-        whatsappUrl: result.whatsappUrl,
-        submittedName: bookName,
-        submittedPhone: validation.cleaned,
+    try {
+      const result = await submitLead({
+        fullName: bookName,
+        phone: validation.cleaned,
+        email: bookEmail,
+        loanType: `1-on-1 Consultation (${bookMode})`,
+        message: `Scheduled Slot: ${bookDate} at ${bookSlot}`,
+        source: "contact-book-consultation",
       });
-    } else {
-      setPhoneError(result.error || "Failed to book consultation.");
+
+      setStatus("success");
+
+      if (result.success) {
+        setModalData({
+          isOpen: true,
+          referenceId: result.referenceId,
+          whatsappUrl: result.whatsappUrl,
+          submittedName: bookName,
+          submittedPhone: validation.cleaned,
+        });
+        toast.success(`Consultation booked! Case Reference: #${result.referenceId}`);
+      } else {
+        const err = result.error || "Failed to book consultation.";
+        setPhoneError(err);
+        toast.error(err);
+      }
+    } catch (err: any) {
+      setStatus("idle");
+      const errMessage = err?.message || "Failed to book consultation. Please try again.";
+      setPhoneError(errMessage);
+      toast.error(errMessage);
     }
   };
 
@@ -802,7 +835,10 @@ export function ContactSplitLayout() {
                   className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 hover:from-primary-700 hover:to-blue-800 shadow-lg shadow-primary-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
                 >
                   {status === "submitting" ? (
-                    <span>Initiating Official Case File...</span>
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+                      <span>Initiating Official Case File...</span>
+                    </>
                   ) : (
                     <>
                       <ShieldCheck className="h-4 w-4 text-amber-300" />
@@ -1015,7 +1051,10 @@ export function ContactSplitLayout() {
                   className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
                 >
                   {status === "submitting" ? (
-                    <span>Securing Advocate Slot...</span>
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+                      <span>Securing Advocate Slot...</span>
+                    </>
                   ) : (
                     <>
                       <UserCheck className="h-4 w-4 text-amber-300" />

@@ -9,7 +9,9 @@ import {
   PhoneCall,
   Sparkles,
   MessageCircle,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { siteConfig } from "@/config/site";
 import { submitLead, validateIndianPhone } from "@/lib/lead";
 import { CaseInitiatedModal } from "@/components/forms/case-initiated-modal";
@@ -52,34 +54,46 @@ export function ConsultationForm({
 
     const validation = validateIndianPhone(formData.phone);
     if (!validation.isValid) {
-      setPhoneError(validation.error || "Please enter a valid 10-digit mobile number");
+      const err = validation.error || "Please enter a valid 10-digit mobile number";
+      setPhoneError(err);
+      toast.error(err);
       return;
     }
 
     setStatus("submitting");
 
-    const result = await submitLead({
-      fullName: formData.fullName,
-      phone: validation.cleaned,
-      email: formData.email,
-      city: formData.city,
-      loanType: formData.loanType,
-      totalDebt: formData.totalDebt,
-      banks: formData.banks,
-      facingHarassment: formData.facingHarassment,
-      source,
-    });
-
-    setStatus("success");
-
-    if (result.success) {
-      setModalData({
-        isOpen: true,
-        referenceId: result.referenceId,
-        whatsappUrl: result.whatsappUrl,
+    try {
+      const result = await submitLead({
+        fullName: formData.fullName,
+        phone: validation.cleaned,
+        email: formData.email,
+        city: formData.city,
+        loanType: formData.loanType,
+        totalDebt: formData.totalDebt,
+        banks: formData.banks,
+        facingHarassment: formData.facingHarassment,
+        source,
       });
-    } else {
-      setPhoneError(result.error || "Failed to submit case file.");
+
+      setStatus("success");
+
+      if (result.success) {
+        setModalData({
+          isOpen: true,
+          referenceId: result.referenceId,
+          whatsappUrl: result.whatsappUrl,
+        });
+        toast.success(`Case submitted! Case Reference: #${result.referenceId}`);
+      } else {
+        const err = result.error || "Failed to submit case file.";
+        setPhoneError(err);
+        toast.error(err);
+      }
+    } catch (err: any) {
+      setStatus("idle");
+      const errMessage = err?.message || "Failed to submit case file. Please try again.";
+      setPhoneError(errMessage);
+      toast.error(errMessage);
     }
   };
 
@@ -330,7 +344,10 @@ export function ConsultationForm({
               className="w-full py-3.5 sm:py-4 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 hover:from-primary-700 hover:to-blue-800 shadow-lg shadow-primary-600/30 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-70"
             >
               {status === "submitting" ? (
-                <span>Registering Case with Advocates...</span>
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin text-amber-300" />
+                  <span>Registering Case with Advocates...</span>
+                </>
               ) : (
                 <>
                   <ShieldCheck className="h-5 w-5 text-amber-300" />

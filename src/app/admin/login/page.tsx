@@ -13,7 +13,9 @@ import {
   AlertCircle,
   Sparkles,
   UserCheck,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -38,17 +40,21 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setError(data.error || "Login failed. Please check your credentials.");
+        const errorMsg = data.error || "Login failed. Please check your credentials.";
+        setError(errorMsg);
+        toast.error(errorMsg);
         setLoading(false);
         return;
       }
 
       // Successful login
+      toast.success("Authentication successful. Redirecting...");
       router.push("/admin");
       router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Network error during login.";
       setError(msg);
+      toast.error(msg);
       setLoading(false);
     }
   };
@@ -145,7 +151,10 @@ export default function AdminLoginPage() {
               className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 active:scale-98 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {loading ? (
-                <span>Authenticating with Secure Key...</span>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-slate-950" />
+                  <span>Authenticating with Secure Key...</span>
+                </>
               ) : (
                 <>
                   <span>Sign In to CRM Portal</span>

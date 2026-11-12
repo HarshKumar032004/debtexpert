@@ -10,7 +10,9 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { UserRole } from "@/lib/auth";
 import { UserManagement, StaffUserItem } from "@/components/admin/settings/user-management";
 import { TemplateManager, TemplateItem } from "@/components/admin/settings/template-manager";
@@ -60,6 +62,13 @@ export function SettingsView({
   const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     setToasts((prev) => [...prev, { id, type, title, description }]);
+    if (type === "success") {
+      toast.success(title, { description });
+    } else if (type === "error") {
+      toast.error(title, { description });
+    } else {
+      toast.info(title, { description });
+    }
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
@@ -224,8 +233,17 @@ export function SettingsView({
                   disabled={testingWhatsApp}
                   className="w-full py-2.5 px-3 rounded-xl bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 text-xs font-bold text-gray-900 dark:text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-50 active:scale-95 min-h-[44px]"
                 >
-                  <Send className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                  <span>{testingWhatsApp ? "Dispatching..." : "Send Test Lead Alert"}</span>
+                  {testingWhatsApp ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-600 dark:text-amber-400" />
+                      <span>Dispatching...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                      <span>Send Test Lead Alert</span>
+                    </>
+                  )}
                 </button>
                 {testResult && (
                   <p className="mt-2 text-[11px] p-2.5 rounded-lg bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300">

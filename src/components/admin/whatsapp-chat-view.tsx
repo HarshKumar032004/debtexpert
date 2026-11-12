@@ -19,9 +19,10 @@ import {
   Scale,
   Calendar,
   X,
-  Filter,
   ChevronLeft,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { LeadDrawer } from "@/components/admin/lead-drawer";
 import { calculateLeadScore } from "@/lib/lead-scoring";
 
@@ -246,12 +247,16 @@ export function WhatsAppChatView({
           const alreadyHas = prev.some((m) => m.id === data.message.id);
           return alreadyHas ? prev : [...prev, data.message];
         });
+        toast.success("Message sent to client");
+      } else {
+        toast.error(data.error || "Failed to deliver message via WhatsApp");
       }
     } catch (err) {
       console.error("Error sending WhatsApp message:", err);
       setMessages((prev) =>
         prev.map((m) => (m.id === tempId ? { ...m, status: "FAILED" } : m))
       );
+      toast.error("Failed to deliver message via WhatsApp");
     } finally {
       setSending(false);
     }
@@ -698,8 +703,17 @@ export function WhatsAppChatView({
                 className="h-11 px-4 min-w-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all active:scale-95 shadow-md shadow-emerald-950/20"
                 aria-label="Send message"
               >
-                <Send className="h-4 w-4" />
-                <span className="hidden sm:inline">Send</span>
+                {sending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="hidden sm:inline">Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    <span className="hidden sm:inline">Send</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

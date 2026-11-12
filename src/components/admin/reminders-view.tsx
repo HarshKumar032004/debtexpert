@@ -12,6 +12,7 @@ import {
   Calendar,
   Sparkles,
 } from "lucide-react";
+import { toast } from "sonner";
 import { LeadDrawer } from "@/components/admin/lead-drawer";
 
 export interface ReminderItem {
@@ -50,13 +51,25 @@ export function RemindersView({
     );
 
     try {
-      await fetch(`/api/admin/leads/${leadId}/reminders`, {
+      const res = await fetch(`/api/admin/leads/${leadId}/reminders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reminderId, isCompleted: !currentStatus }),
       });
+      if (!res.ok) {
+        setReminders((prev) =>
+          prev.map((r) => (r.id === reminderId ? { ...r, isCompleted: currentStatus } : r))
+        );
+        toast.error("Failed to update reminder status");
+      } else {
+        toast.success(currentStatus ? "Reminder marked as pending" : "Reminder marked as completed");
+      }
     } catch (e) {
       console.error(e);
+      setReminders((prev) =>
+        prev.map((r) => (r.id === reminderId ? { ...r, isCompleted: currentStatus } : r))
+      );
+      toast.error("Failed to update reminder status");
     }
   };
 
