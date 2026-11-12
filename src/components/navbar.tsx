@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { RbiTicker } from "@/components/layout/rbi-ticker";
 import { cn } from "@/lib/utils";
 
 const serviceIcons = {
@@ -81,57 +82,32 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full transition-all duration-200">
       {/* Top Advisory Banner */}
-      <div className="bg-slate-900 text-slate-100 text-xs py-2 px-4 border-b border-slate-800">
-        <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-semibold text-emerald-400">
-              RBI Advisory Notice:
-            </span>
-            <span className="text-slate-300 hidden sm:inline">
-              Banks and recovery agents cannot harass or threaten you. You have legal consumer rights.
-            </span>
-            <span className="text-slate-300 sm:hidden">
-              Protected by RBI Fair Practices Code.
-            </span>
-          </div>
-          <div className="flex items-center gap-4 text-slate-300">
-            <a
-              href={`tel:${siteConfig.phone.replace(/[^0-9+]/g, "")}`}
-              className="flex items-center gap-1.5 hover:text-white transition-colors"
-            >
-              <PhoneCall className="h-3 w-3 text-emerald-400" />
-              <span className="font-medium text-white">{siteConfig.phoneDisplay}</span>
-              <span className="text-slate-400 text-[11px]">(9:00 AM - 5:00 PM)</span>
-            </a>
-          </div>
-        </div>
-      </div>
+      <RbiTicker />
 
-      {/* Main Glassmorphic Navigation Bar */}
+      {/* Main Navigation Bar */}
       <nav
         aria-label="Main Navigation"
         className={cn(
-          "w-full transition-all duration-200 border-b",
+          "w-full h-16 flex items-center justify-between border-b public-navbar transition-all duration-200",
           isScrolled
-            ? "glass-panel shadow-sm py-2.5"
-            : "bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80 py-3.5"
+            ? "bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-gray-200 dark:border-zinc-800 shadow-sm"
+            : "bg-white dark:bg-zinc-950 border-gray-200 dark:border-zinc-800"
         )}
       >
-        <div className="container mx-auto flex items-center justify-between">
+        <div className="container mx-auto flex items-center justify-between h-full px-4 sm:px-6">
           {/* Brand Logo */}
           <Link
             href="/"
-            className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
+            className="flex items-center gap-2.5 h-8 w-auto group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-md shadow-primary-500/25 group-hover:scale-105 transition-transform duration-200">
-              <Scale className="h-5 w-5" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm group-hover:scale-105 transition-transform duration-200">
+              <Scale className="h-4 w-4" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
-                Debt Support <span className="text-primary-500 dark:text-primary-400">Expert</span>
+              <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                Debt Support <span className="text-primary-600 dark:text-primary-400">Expert</span>
               </span>
-              <span className="text-[10px] font-semibold tracking-wider uppercase text-emerald-600 dark:text-emerald-400">
+              <span className="text-[9px] font-bold tracking-wider uppercase text-emerald-600 dark:text-emerald-400">
                 Legal & Loan Settlement
               </span>
             </div>
@@ -178,7 +154,7 @@ export function Navbar() {
               {servicesDropdownOpen && (
                 <div
                   onMouseLeave={() => setServicesDropdownOpen(false)}
-                  className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[540px] rounded-2xl glass-dropdown p-4 border shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[540px] rounded-2xl bg-white dark:bg-zinc-950 p-4 border border-gray-200 dark:border-zinc-800 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150"
                 >
                   <div className="grid grid-cols-2 gap-2">
                     {siteConfig.services.map((service) => {
@@ -190,7 +166,7 @@ export function Navbar() {
                           key={service.href}
                           href={service.href}
                           onClick={() => setServicesDropdownOpen(false)}
-                          className="group flex flex-col p-3 rounded-xl hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                          className="group flex flex-col p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-900 transition-all border border-transparent hover:border-gray-200 dark:hover:border-zinc-800"
                         >
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
@@ -207,7 +183,7 @@ export function Navbar() {
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                          <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-2">
                             {service.description}
                           </p>
                         </Link>
@@ -215,8 +191,8 @@ export function Navbar() {
                     })}
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between px-2 text-xs">
-                    <span className="text-slate-500 dark:text-slate-400">
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-800 flex items-center justify-between px-2 text-xs">
+                    <span className="text-slate-500 dark:text-zinc-400">
                       Need custom corporate or high-ticket settlement?
                     </span>
                     <Link
@@ -341,246 +317,236 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Navigation Drawer Modal / Slide-over */}
+        {/* Mobile Fullscreen Navigation Overlay */}
         {mobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 flex justify-end">
-            {/* Smooth Backdrop */}
-            <div
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
-              onClick={() => setMobileMenuOpen(false)}
-              aria-hidden="true"
-            />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile Navigation Menu"
+            className="lg:hidden fixed inset-0 z-[100] h-screen w-screen bg-white dark:bg-zinc-950 overflow-y-auto flex flex-col"
+          >
+            {/* Header with standardized Logo and prominent Close (X) button */}
+            <div className="flex items-center justify-between px-5 h-16 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shrink-0">
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2.5 h-8 w-auto"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm">
+                  <Scale className="h-4 w-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                    Debt Support <span className="text-primary-600 dark:text-primary-400">Expert</span>
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    Legal & Loan Settlement
+                  </span>
+                </div>
+              </Link>
 
-            {/* Drawer Panel */}
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-label="Mobile Navigation Menu"
-              className="relative w-full max-w-[340px] sm:max-w-md h-full bg-white dark:bg-slate-950 z-10 flex flex-col shadow-2xl border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-300 ease-out"
-            >
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/60 shrink-0">
-                <Link
-                  href="/"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2.5"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm">
-                    <Scale className="h-4 w-4" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
-                      Debt Support <span className="text-primary-600 dark:text-primary-400">Expert</span>
-                    </span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                      Legal & Loan Settlement
-                    </span>
-                  </div>
-                </Link>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 active:scale-95 transition-all"
+                aria-label="Close navigation menu"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
 
+            {/* Scrollable Links Area */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2.5">
+              {/* Home Link */}
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
+                  pathname === "/"
+                    ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
+                    : "text-slate-800 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-zinc-900"
+                )}
+              >
+                <span>Home</span>
+              </Link>
+
+              {/* Services Collapsible Accordion */}
+              <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 overflow-hidden bg-gray-50/50 dark:bg-zinc-900/30">
                 <button
                   type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 active:scale-95 transition-all"
-                  aria-label="Close navigation menu"
+                  onClick={() => setMobileServicesOpen((prev) => !prev)}
+                  className="flex items-center justify-between w-full py-3 px-3.5 text-sm font-bold text-slate-900 dark:text-white"
+                  aria-expanded={mobileServicesOpen}
                 >
-                  <X className="h-5 w-5" />
+                  <span className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                    <span>Services & Debt Relief</span>
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 text-slate-500 transition-transform duration-200",
+                      mobileServicesOpen ? "rotate-180" : ""
+                    )}
+                  />
                 </button>
-              </div>
 
-              {/* Scrollable Links Area */}
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2.5">
-                {/* Home Link */}
-                <Link
-                  href="/"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
-                    pathname === "/"
-                      ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
-                      : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900"
-                  )}
-                >
-                  <span>Home</span>
-                </Link>
-
-                {/* Services Collapsible Accordion */}
-                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50/50 dark:bg-slate-900/30">
-                  <button
-                    type="button"
-                    onClick={() => setMobileServicesOpen((prev) => !prev)}
-                    className="flex items-center justify-between w-full py-3 px-3.5 text-sm font-bold text-slate-900 dark:text-white"
-                    aria-expanded={mobileServicesOpen}
-                  >
-                    <span className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                      <span>Services & Debt Relief</span>
-                    </span>
-                    <ChevronDown
-                      className={cn(
-                        "h-4 w-4 text-slate-500 transition-transform duration-200",
-                        mobileServicesOpen ? "rotate-180" : ""
-                      )}
-                    />
-                  </button>
-
-                  {mobileServicesOpen && (
-                    <div className="space-y-1 px-2.5 pb-2.5 pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
-                      {siteConfig.services.map((service) => {
-                        const Icon =
-                          serviceIcons[service.href as keyof typeof serviceIcons] ||
-                          Scale;
-                        return (
-                          <Link
-                            key={service.href}
-                            href={service.href}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="flex items-start gap-2.5 p-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800/80 transition-colors"
-                          >
-                            <div className="h-6 w-6 rounded-lg bg-primary-100/70 dark:bg-primary-950 text-primary-700 dark:text-primary-300 flex items-center justify-center shrink-0 mt-0.5">
-                              <Icon className="h-3.5 w-3.5" />
+                {mobileServicesOpen && (
+                  <div className="space-y-1 px-2.5 pb-2.5 pt-1 border-t border-gray-200/80 dark:border-zinc-800/80">
+                    {siteConfig.services.map((service) => {
+                      const Icon =
+                        serviceIcons[service.href as keyof typeof serviceIcons] ||
+                        Scale;
+                      return (
+                        <Link
+                          key={service.href}
+                          href={service.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-start gap-2.5 p-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <div className="h-6 w-6 rounded-lg bg-primary-100/70 dark:bg-primary-950 text-primary-700 dark:text-primary-300 flex items-center justify-center shrink-0 mt-0.5">
+                            <Icon className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-bold text-slate-900 dark:text-white flex items-center justify-between">
+                              <span>{service.shortTitle}</span>
+                              {service.badge && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                  {service.badge}
+                                </span>
+                              )}
                             </div>
-                            <div className="flex-1">
-                              <div className="font-bold text-slate-900 dark:text-white flex items-center justify-between">
-                                <span>{service.shortTitle}</span>
-                                {service.badge && (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                    {service.badge}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-                                {service.description}
-                              </p>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                      <Link
-                        href="/services"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block py-2 px-2.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline"
-                      >
-                        View All Services Overview →
-                      </Link>
-                    </div>
-                  )}
-                </div>
-
-                {/* Calculator Link with Free badge */}
-                <Link
-                  href="/calculator"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
-                    pathname === "/calculator"
-                      ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
-                      : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <Calculator className="h-4 w-4 text-emerald-500" />
-                    <span>Settlement Calculator</span>
+                            <p className="text-[11px] text-slate-500 dark:text-zinc-400 line-clamp-1 mt-0.5">
+                              {service.description}
+                            </p>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                    <Link
+                      href="/services"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block py-2 px-2.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline"
+                    >
+                      View All Services Overview →
+                    </Link>
                   </div>
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                    Free
-                  </span>
-                </Link>
-
-                {/* Pricing Link */}
-                <Link
-                  href="/pricing"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
-                    pathname === "/pricing"
-                      ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
-                      : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary-500" />
-                    <span>Advisory Pricing</span>
-                  </div>
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-primary-100 text-primary-800 dark:bg-primary-950 dark:text-primary-300">
-                    Transparent
-                  </span>
-                </Link>
-
-                {/* About Lawyers */}
-                <Link
-                  href="/about"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
-                    pathname === "/about"
-                      ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
-                      : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900"
-                  )}
-                >
-                  <span>About Our Advocates</span>
-                </Link>
-
-                {/* Blog */}
-                <Link
-                  href="/blog"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
-                    pathname.startsWith("/blog")
-                      ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
-                      : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900"
-                  )}
-                >
-                  <span>RBI Guides & Blog</span>
-                </Link>
-
-                {/* Contact */}
-                <Link
-                  href="/contact"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
-                    pathname === "/contact"
-                      ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
-                      : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900"
-                  )}
-                >
-                  <span>Contact & Offices</span>
-                </Link>
-
-                {/* Emergency Harassment Advisory Pill */}
-                <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/70 dark:border-blue-900/50 text-[11px] text-blue-900 dark:text-blue-300 leading-relaxed mt-2">
-                  <div className="font-bold flex items-center gap-1.5 mb-0.5 text-xs">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>RBI Protection Active:</span>
-                  </div>
-                  <span>Unannounced recovery home visits and calls to family members are illegal under RBI guidelines.</span>
-                </div>
+                )}
               </div>
 
-              {/* Full-Width Sticky Bottom Drawer CTA */}
-              <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md space-y-2.5 shrink-0">
-                <Link
-                  href="/contact"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 shadow-md active:scale-95 transition-transform"
-                >
-                  <Sparkles className="h-4 w-4 text-amber-300" />
-                  <span>Get Free Legal Help</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+              {/* Calculator Link with Free badge */}
+              <Link
+                href="/calculator"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
+                  pathname === "/calculator"
+                    ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
+                    : "text-slate-800 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-zinc-900"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-emerald-500" />
+                  <span>Settlement Calculator</span>
+                </div>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  Free
+                </span>
+              </Link>
 
-                <a
-                  href={siteConfig.getWhatsAppUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-xs text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 transition-transform"
-                >
-                  <MessageCircle className="h-4 w-4 fill-white" />
-                  <span>WhatsApp Legal Helpline</span>
-                </a>
+              {/* Pricing Link */}
+              <Link
+                href="/pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
+                  pathname === "/pricing"
+                    ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
+                    : "text-slate-800 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-zinc-900"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary-500" />
+                  <span>Advisory Pricing</span>
+                </div>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-primary-100 text-primary-800 dark:bg-primary-950 dark:text-primary-300">
+                  Transparent
+                </span>
+              </Link>
+
+              {/* About Lawyers */}
+              <Link
+                href="/about"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
+                  pathname === "/about"
+                    ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
+                    : "text-slate-800 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-zinc-900"
+                )}
+              >
+                <span>About Our Advocates</span>
+              </Link>
+
+              {/* Blog */}
+              <Link
+                href="/blog"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
+                  pathname.startsWith("/blog")
+                    ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
+                    : "text-slate-800 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-zinc-900"
+                )}
+              >
+                <span>RBI Guides & Blog</span>
+              </Link>
+
+              {/* Contact */}
+              <Link
+                href="/contact"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center justify-between py-2.5 px-3.5 rounded-xl text-sm font-semibold transition-colors",
+                  pathname === "/contact"
+                    ? "bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300"
+                    : "text-slate-800 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-zinc-900"
+                )}
+              >
+                <span>Contact & Offices</span>
+              </Link>
+
+              {/* Emergency Harassment Advisory Pill */}
+              <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/70 dark:border-blue-900/50 text-[11px] text-blue-900 dark:text-blue-300 leading-relaxed mt-2">
+                <div className="font-bold flex items-center gap-1.5 mb-0.5 text-xs">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>RBI Protection Active:</span>
+                </div>
+                <span>Unannounced recovery home visits and calls to family members are illegal under RBI guidelines.</span>
               </div>
+            </div>
+
+            {/* Full-Width Pinned Bottom Drawer CTA */}
+            <div className="p-4 border-t border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md space-y-2.5 shrink-0">
+              <Link
+                href="/contact"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 shadow-md active:scale-95 transition-transform"
+              >
+                <Sparkles className="h-4 w-4 text-amber-300" />
+                <span>Get Free Legal Help</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
+              <a
+                href={siteConfig.getWhatsAppUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-xs text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 transition-transform"
+              >
+                <MessageCircle className="h-4 w-4 fill-white" />
+                <span>WhatsApp Legal Helpline</span>
+              </a>
             </div>
           </div>
         )}

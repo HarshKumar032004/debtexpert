@@ -7,8 +7,9 @@ import { siteConfig } from "@/config/site";
 export function StickyMobileCTA() {
   return (
     <aside
+      id="sticky-mobile-cta"
       aria-label="Quick Emergency Consultation"
-      className="fixed bottom-0 inset-x-0 z-40 lg:hidden glass-panel border-t border-slate-200/90 dark:border-slate-800/90 py-2.5 px-4 shadow-[0_-8px_20px_rgba(0,0,0,0.1)]"
+      className="fixed bottom-0 inset-x-0 z-40 lg:hidden bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-gray-200 dark:border-zinc-800 py-2.5 px-4 shadow-[0_-8px_20px_rgba(0,0,0,0.1)]"
     >
       <div className="flex items-center gap-2 max-w-md mx-auto">
         <a
