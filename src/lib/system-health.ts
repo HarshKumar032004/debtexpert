@@ -135,7 +135,8 @@ export async function getSystemHealth(): Promise<SystemHealthData> {
 
           if (Array.isArray(data.health_status.entities)) {
             for (const ent of data.health_status.entities) {
-              if (Array.isArray(ent.errors)) {
+              // Only treat entities whose status is strictly BLOCKED as delivery blockers
+              if (ent.can_send_message === "BLOCKED" && Array.isArray(ent.errors)) {
                 for (const err of ent.errors) {
                   // Filter out irrelevant SIP calling errors
                   if (err.error_code !== 138024 && err.error_code !== 138025) {

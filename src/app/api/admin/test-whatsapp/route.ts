@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { sendAdminLeadNotification } from "@/lib/whatsapp";
+import { sendMetaWhatsAppMessage } from "@/lib/whatsapp";
 import { getSystemHealth } from "@/lib/system-health";
+import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -19,15 +20,12 @@ export async function POST() {
       );
     }
 
-    const testResult = await sendAdminLeadNotification({
-      id: "test-id",
-      referenceId: "DSE-TEST99",
-      fullName: "Diagnostic Test Lead",
-      phone: "919876543210",
-      city: "New Delhi",
-      totalDebtRange: "₹15,00,000",
-      legalIssue: "System Diagnostics & WhatsApp API Ping",
-      source: "ADMIN_SETTINGS_DIAGNOSTIC",
+    // Use official Meta template "hello_world" for diagnostic ping, which works outside the 24h window
+    const testResult = await sendMetaWhatsAppMessage({
+      to: env.ADMIN_WHATSAPP_NUMBER,
+      type: "template",
+      templateName: "hello_world",
+      templateLanguage: "en_US",
     });
 
     if (!testResult.success) {
