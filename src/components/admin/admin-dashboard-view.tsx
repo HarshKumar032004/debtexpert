@@ -7,19 +7,12 @@ import {
   AlertTriangle,
   Calendar,
   TrendingUp,
-  Clock,
-  Phone,
-  MessageCircle,
-  ExternalLink,
   ChevronRight,
-  ShieldAlert,
-  Sparkles,
-  CheckCircle2,
   DollarSign,
   ArrowUpRight,
   Radar,
 } from "lucide-react";
-import { LeadDrawer, LeadDetailData } from "@/components/admin/lead-drawer";
+import { LeadDrawer } from "@/components/admin/lead-drawer";
 import { calculateLeadScore } from "@/lib/lead-scoring";
 
 interface KpiData {
@@ -113,26 +106,26 @@ export function AdminDashboardView({
   };
 
   return (
-    <div className="space-y-8">
-      {/* Top Header / Status Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/20 border border-slate-800 shadow-xl">
-        <div className="space-y-1">
+    <div className="space-y-6">
+      {/* Top Welcome & Quick Jump */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white">
-              Executive Command Center
+            <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+              <span>Executive Command Center</span>
             </h1>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
               Live Real-Time
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400">
-            Official senior advocate intake desk tracking lead pipelines, emergency harassment defenses, and settlement conversions.
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 mt-1">
+            Real-time borrower ingestion telemetry, emergency harassment monitoring, and OTS pipeline tracking.
           </p>
         </div>
 
         <Link
           href="/admin/leads"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 active:scale-95 transition-all"
         >
           <span>Open Full Leads Table</span>
           <ArrowUpRight className="h-4 w-4" />
@@ -140,79 +133,79 @@ export function AdminDashboardView({
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {/* KPI 1: Total Inquiries */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg space-y-2 relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-2 relative overflow-hidden group">
+          <div className="flex items-center justify-between text-gray-500 dark:text-zinc-400">
             <span className="text-xs font-bold uppercase tracking-wider">Active Inquiries</span>
-            <Users className="h-4 w-4 text-blue-400" />
+            <Users className="h-4 w-4 text-blue-500 dark:text-blue-400" />
           </div>
-          <div className="text-3xl font-extrabold text-white">{kpis.totalActive}</div>
-          <p className="text-[11px] text-slate-500 flex items-center gap-1">
+          <div className="text-3xl font-extrabold text-gray-900 dark:text-white">{kpis.totalActive}</div>
+          <p className="text-[11px] text-gray-500 dark:text-zinc-500 flex items-center gap-1">
             <span>5 Funnels Ingesting</span>
           </p>
         </div>
 
         {/* KPI 2: Harassment Emergencies */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-red-900/40 shadow-lg space-y-2 relative overflow-hidden group">
-          <div className="flex items-center justify-between text-red-400">
+        <div className="p-5 rounded-2xl bg-red-50/60 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 shadow-sm space-y-2 relative overflow-hidden group">
+          <div className="flex items-center justify-between text-red-600 dark:text-red-400">
             <span className="text-xs font-bold uppercase tracking-wider">Harassment Cases</span>
-            <AlertTriangle className="h-4 w-4 text-red-400" />
+            <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
           </div>
-          <div className="text-3xl font-extrabold text-red-400">{kpis.harassmentCount}</div>
-          <p className="text-[11px] text-red-400/80">Immediate Legal Notice</p>
+          <div className="text-3xl font-extrabold text-red-600 dark:text-red-400">{kpis.harassmentCount}</div>
+          <p className="text-[11px] text-red-600/80 dark:text-red-400/80">Immediate Legal Notice</p>
         </div>
 
         {/* KPI 3: Consultations Scheduled */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg space-y-2 relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-2 relative overflow-hidden group">
+          <div className="flex items-center justify-between text-gray-500 dark:text-zinc-400">
             <span className="text-xs font-bold uppercase tracking-wider">Consultations</span>
-            <Calendar className="h-4 w-4 text-amber-400" />
+            <Calendar className="h-4 w-4 text-amber-500 dark:text-amber-400" />
           </div>
-          <div className="text-3xl font-extrabold text-amber-400">{kpis.scheduledCount}</div>
-          <p className="text-[11px] text-slate-500">Scheduled Bookings</p>
+          <div className="text-3xl font-extrabold text-amber-600 dark:text-amber-400">{kpis.scheduledCount}</div>
+          <p className="text-[11px] text-gray-500 dark:text-zinc-500">Scheduled Bookings</p>
         </div>
 
         {/* KPI 4: Estimated Pipeline Value */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg space-y-2 relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-2 relative overflow-hidden group">
+          <div className="flex items-center justify-between text-gray-500 dark:text-zinc-400">
             <span className="text-xs font-bold uppercase tracking-wider">Pipeline Debt</span>
-            <DollarSign className="h-4 w-4 text-emerald-400" />
+            <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-tight">
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
             {kpis.pipelineValueStr}
           </div>
-          <p className="text-[11px] text-slate-500">Under Active OTS Defense</p>
+          <p className="text-[11px] text-gray-500 dark:text-zinc-500">Under Active OTS Defense</p>
         </div>
 
         {/* KPI 5: Conversion Rate */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg space-y-2 relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-2 relative overflow-hidden group">
+          <div className="flex items-center justify-between text-gray-500 dark:text-zinc-400">
             <span className="text-xs font-bold uppercase tracking-wider">OTS Conversion</span>
-            <TrendingUp className="h-4 w-4 text-purple-400" />
+            <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           </div>
-          <div className="text-3xl font-extrabold text-purple-400">{kpis.conversionRate}%</div>
-          <p className="text-[11px] text-slate-500">Inquiry to Sanctioned OTS</p>
+          <div className="text-3xl font-extrabold text-purple-600 dark:text-purple-400">{kpis.conversionRate}%</div>
+          <p className="text-[11px] text-gray-500 dark:text-zinc-500">Inquiry to Sanctioned OTS</p>
         </div>
       </div>
 
       {/* Mid Section: Follow-Up Radar & Daily Volume Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Follow-Up Radar Card (7 Cols) */}
-        <div className="lg:col-span-7 rounded-2xl border border-slate-800 bg-slate-900 shadow-xl overflow-hidden flex flex-col">
-          <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
+        <div className="lg:col-span-7 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 sm:p-5 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between bg-gray-50/80 dark:bg-zinc-950/40">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 <Radar className="h-4 w-4 animate-pulse" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   <span>Follow-Up Radar</span>
-                  <span className="px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono">
+                  <span className="px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] font-mono">
                     {followUps.length} Pending
                   </span>
                 </h2>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-gray-500 dark:text-zinc-400">
                   Priority callbacks due now or requiring follow-up action
                 </p>
               </div>
@@ -220,14 +213,14 @@ export function AdminDashboardView({
 
             <Link
               href="/admin/reminders"
-              className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
+              className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-semibold flex items-center gap-1"
             >
               <span>View Reminders</span>
               <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
-          <div className="divide-y divide-slate-800/80 flex-1 overflow-y-auto max-h-[380px]">
+          <div className="divide-y divide-gray-100 dark:divide-zinc-800/80 flex-1 overflow-y-auto max-h-[380px]">
             {followUps.length > 0 ? (
               followUps.map((item) => {
                 const isOverdue =
@@ -237,41 +230,41 @@ export function AdminDashboardView({
                 return (
                   <div
                     key={item.id}
-                    className="p-4 hover:bg-slate-800/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                    className="p-4 hover:bg-gray-50 dark:hover:bg-zinc-800/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                   >
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono font-bold text-amber-400 text-[11px]">
+                        <span className="font-mono font-bold text-amber-600 dark:text-amber-400 text-[11px]">
                           {item.referenceId}
                         </span>
-                        <span className="font-bold text-white text-sm">
+                        <span className="font-bold text-gray-900 dark:text-white text-sm">
                           {item.fullName}
                         </span>
                         <span
                           className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded ${
                             score.tier === "HOT"
-                              ? "bg-red-500/20 text-red-300"
-                              : "bg-amber-500/20 text-amber-300"
+                              ? "bg-red-500/15 text-red-700 dark:text-red-300"
+                              : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
                           }`}
                         >
                           {score.tier}
                         </span>
                         {isOverdue && (
-                          <span className="text-[10px] font-bold text-red-400 bg-red-950/80 px-1.5 py-0.5 rounded border border-red-800">
+                          <span className="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/80 px-1.5 py-0.5 rounded border border-red-300 dark:border-red-800">
                             OVERDUE
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 text-[11px] text-slate-400 flex-wrap">
+                      <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-zinc-400 flex-wrap">
                         <span>📱 +{item.phone}</span>
                         {item.city && <span>📍 {item.city}</span>}
                         {item.totalDebtRange && (
-                          <span className="font-semibold text-slate-300">
+                          <span className="font-semibold text-gray-700 dark:text-zinc-300">
                             💰 {item.totalDebtRange}
                           </span>
                         )}
-                        <span className="text-slate-500 truncate max-w-[160px]">
+                        <span className="text-gray-500 dark:text-zinc-500 truncate max-w-[160px]">
                           {item.legalIssue}
                         </span>
                       </div>
@@ -282,7 +275,7 @@ export function AdminDashboardView({
                       <button
                         type="button"
                         onClick={() => handleMarkContacted(item.id)}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition-colors"
+                        className="px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-200 text-[11px] font-semibold border border-gray-200 dark:border-zinc-700 transition-colors"
                         title="Mark Status as Contacted"
                       >
                         Contacted
@@ -291,7 +284,7 @@ export function AdminDashboardView({
                       <button
                         type="button"
                         onClick={() => handlePostpone24h(item.id)}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition-colors"
+                        className="px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-200 text-[11px] font-semibold border border-gray-200 dark:border-zinc-700 transition-colors"
                         title="Delay follow-up by 24 hours"
                       >
                         +24h
@@ -309,7 +302,7 @@ export function AdminDashboardView({
                 );
               })
             ) : (
-              <div className="p-8 text-center text-slate-500 text-xs">
+              <div className="p-8 text-center text-gray-500 dark:text-zinc-500 text-xs">
                 No overdue follow-ups! All active case files contacted.
               </div>
             )}
@@ -317,15 +310,15 @@ export function AdminDashboardView({
         </div>
 
         {/* 7-Day Ingestion Volume Chart (5 Cols) */}
-        <div className="lg:col-span-5 rounded-2xl border border-slate-800 bg-slate-900 shadow-xl p-5 flex flex-col justify-between">
+        <div className="lg:col-span-5 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-4 sm:p-5 flex flex-col justify-between">
           <div className="space-y-1 mb-4">
-            <h2 className="text-sm font-bold text-white flex items-center justify-between">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center justify-between">
               <span>7-Day Ingestion Volume</span>
-              <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase">
+              <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold uppercase">
                 Active Inflow
               </span>
             </h2>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-gray-500 dark:text-zinc-400">
               Daily verified borrower submissions across web funnels & WhatsApp
             </p>
           </div>
@@ -337,7 +330,7 @@ export function AdminDashboardView({
 
               return (
                 <div key={vol.dateStr} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                  <span className="text-[10px] font-mono font-bold text-slate-400 group-hover:text-amber-400 transition-colors">
+                  <span className="text-[10px] font-mono font-bold text-gray-600 dark:text-zinc-400 group-hover:text-amber-500 transition-colors">
                     {vol.count}
                   </span>
                   <div
@@ -347,13 +340,13 @@ export function AdminDashboardView({
                       backgroundColor: vol.isToday
                         ? "#f59e0b"
                         : vol.count > 0
-                        ? "#38bdf8"
-                        : "#334155",
+                        ? "#0ea5e9"
+                        : "#94a3b8",
                     }}
                   />
                   <span
                     className={`text-[10px] font-medium uppercase ${
-                      vol.isToday ? "text-amber-400 font-bold" : "text-slate-500"
+                      vol.isToday ? "text-amber-600 dark:text-amber-400 font-bold" : "text-gray-500 dark:text-zinc-500"
                     }`}
                   >
                     {vol.dayLabel}
@@ -363,10 +356,10 @@ export function AdminDashboardView({
             })}
           </div>
 
-          <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+          <div className="pt-4 border-t border-gray-200 dark:border-zinc-800/80 flex items-center justify-between text-[11px] text-gray-500 dark:text-zinc-400">
             <span>Peak Day: {maxVolume} Inquiries</span>
-            <span className="flex items-center gap-1.5 text-amber-400 font-bold">
-              <span className="h-2 w-2 rounded-full bg-amber-400" />
+            <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold">
+              <span className="h-2 w-2 rounded-full bg-amber-500" />
               <span>Today</span>
             </span>
           </div>

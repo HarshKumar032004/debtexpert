@@ -78,33 +78,33 @@ export function RemindersView({
   const renderReminderCard = (rem: ReminderItem, isOverdue = false) => (
     <div
       key={rem.id}
-      className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-colors ${
+      className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-colors shadow-sm ${
         rem.isCompleted
-          ? "bg-slate-950/40 border-slate-800 text-slate-500 line-through"
+          ? "bg-gray-50/50 dark:bg-zinc-950/40 border-gray-200 dark:border-zinc-800 text-gray-400 dark:text-zinc-500 line-through"
           : isOverdue
-          ? "bg-red-950/30 border-red-900/60 text-slate-200"
-          : "bg-slate-900 border-slate-800 text-slate-200"
+          ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/60 text-gray-900 dark:text-zinc-200"
+          : "bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-200"
       }`}
     >
       <div className="space-y-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono font-bold text-amber-400 text-[11px]">
+          <span className="font-mono font-bold text-amber-600 dark:text-amber-400 text-[11px]">
             {rem.leadReferenceId}
           </span>
-          <span className="font-bold text-white text-sm">{rem.clientName}</span>
-          <span className="font-mono text-slate-400 text-[11px]">+{rem.clientPhone}</span>
+          <span className="font-bold text-gray-900 dark:text-white text-sm">{rem.clientName}</span>
+          <span className="font-mono text-gray-500 dark:text-zinc-400 text-[11px]">+{rem.clientPhone}</span>
           {isOverdue && !rem.isCompleted && (
-            <span className="px-1.5 py-0.2 rounded bg-red-900/80 text-red-300 font-extrabold text-[9px] uppercase tracking-wider">
+            <span className="px-1.5 py-0.2 rounded bg-red-100 dark:bg-red-900/80 text-red-700 dark:text-red-300 font-extrabold text-[9px] uppercase tracking-wider">
               Overdue
             </span>
           )}
         </div>
 
-        <p className="font-medium text-slate-300">{rem.note}</p>
+        <p className="font-medium text-gray-700 dark:text-zinc-300">{rem.note}</p>
 
-        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+        <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-zinc-400">
           <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3 text-amber-400" />
+            <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
             <span>{new Date(rem.scheduledAt).toLocaleString("en-IN")}</span>
           </span>
           {rem.assignedAdvisorName && (
@@ -117,10 +117,10 @@ export function RemindersView({
         <button
           type="button"
           onClick={() => handleToggle(rem.leadId, rem.id, rem.isCompleted)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+          className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-bold transition-colors ${
             rem.isCompleted
-              ? "bg-slate-800 hover:bg-slate-700 text-slate-300"
-              : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-950"
+              ? "bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300"
+              : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-950/20"
           }`}
         >
           {rem.isCompleted ? "Mark Pending" : "Mark Completed"}
@@ -132,8 +132,9 @@ export function RemindersView({
             setSelectedLeadId(rem.leadId);
             setDrawerOpen(true);
           }}
-          className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 transition-colors"
+          className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-amber-700 dark:text-amber-400 transition-colors"
           title="Open Case File"
+          aria-label="Open Case File"
         >
           <FolderOpen className="h-3.5 w-3.5" />
         </button>
@@ -146,14 +147,14 @@ export function RemindersView({
       {/* Top Banner */}
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-xl sm:text-2xl font-extrabold text-white">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white">
             Reminders & Follow-Up Desk
           </h1>
-          <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-amber-400 border border-slate-700">
+          <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-zinc-800 text-amber-700 dark:text-amber-400 border border-gray-200 dark:border-zinc-700">
             {overdueList.length + todayList.length} Active
           </span>
         </div>
-        <p className="text-xs sm:text-sm text-slate-400">
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400">
           Track scheduled client callbacks, settlement negotiations, and legal representation milestones.
         </p>
       </div>
@@ -161,7 +162,7 @@ export function RemindersView({
       {/* Overdue Queue */}
       {overdueList.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-red-400 text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-rose-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider">
             <AlertCircle className="h-4 w-4" />
             <span>Overdue Callbacks ({overdueList.length})</span>
           </div>
@@ -173,7 +174,7 @@ export function RemindersView({
 
       {/* Due Today Queue */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
+        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">
           <Calendar className="h-4 w-4" />
           <span>Scheduled Today ({todayList.length})</span>
         </div>
@@ -181,7 +182,7 @@ export function RemindersView({
           {todayList.length > 0 ? (
             todayList.map((r) => renderReminderCard(r, false))
           ) : (
-            <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-500">
+            <div className="p-6 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-center text-xs text-gray-500 dark:text-zinc-400">
               No callbacks due today.
             </div>
           )}
@@ -190,7 +191,7 @@ export function RemindersView({
 
       {/* Upcoming & Completed Queue */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-wider">
+        <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
           <Clock className="h-4 w-4" />
           <span>Upcoming & Resolved ({upcomingAndDone.length})</span>
         </div>
@@ -198,7 +199,7 @@ export function RemindersView({
           {upcomingAndDone.length > 0 ? (
             upcomingAndDone.map((r) => renderReminderCard(r, false))
           ) : (
-            <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-500">
+            <div className="p-6 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-center text-xs text-gray-500 dark:text-zinc-400">
               No upcoming reminders.
             </div>
           )}

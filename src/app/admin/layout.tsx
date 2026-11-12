@@ -1,8 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { seedDatabaseIfNeeded } from "@/lib/seed";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
-import { AdminTopbar } from "@/components/admin/admin-topbar";
+import { AdminLayoutClient } from "@/components/admin/admin-layout-client";
 
 export const dynamic = "force-dynamic";
 
@@ -44,20 +43,12 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950">
-      {/* Collapsible Sidebar */}
-      <AdminSidebar
-        pendingCount={pendingLeadsCount}
-        unreadWhatsAppCount={unreadWhatsAppCount}
-      />
-
-      {/* Main Workspace Frame */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        <AdminTopbar user={user} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-950/95">
-          {children}
-        </main>
-      </div>
-    </div>
+    <AdminLayoutClient
+      user={user}
+      pendingCount={pendingLeadsCount}
+      unreadWhatsAppCount={unreadWhatsAppCount}
+    >
+      {children}
+    </AdminLayoutClient>
   );
 }

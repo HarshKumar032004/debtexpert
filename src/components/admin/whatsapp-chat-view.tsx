@@ -20,6 +20,7 @@ import {
   Calendar,
   X,
   Filter,
+  ChevronLeft,
 } from "lucide-react";
 import { LeadDrawer } from "@/components/admin/lead-drawer";
 import { calculateLeadScore } from "@/lib/lead-scoring";
@@ -72,6 +73,7 @@ export function WhatsAppChatView({
   const [activeLeadId, setActiveLeadId] = React.useState<string | null>(
     initialActiveLeadId || (initialConversations[0]?.id ?? null)
   );
+  const [showMobileChat, setShowMobileChat] = React.useState(Boolean(initialActiveLeadId));
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = React.useState(false);
   const [inputText, setInputText] = React.useState("");
@@ -314,30 +316,34 @@ export function WhatsAppChatView({
   }, [messages]);
 
   return (
-    <div className="h-[calc(100vh-8.5rem)] flex rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden">
-      {/* 1. LEFT PANE: Conversations Roster (320px - 380px) */}
-      <div className="w-80 sm:w-96 border-r border-slate-800 bg-slate-950/60 flex flex-col shrink-0">
+    <div className="h-[calc(100vh-8.5rem)] flex rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden">
+      {/* 1. LEFT PANE: Conversations Roster */}
+      <div
+        className={`w-full md:w-80 lg:w-96 border-r border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 flex flex-col shrink-0 ${
+          showMobileChat ? "hidden md:flex" : "flex"
+        }`}
+      >
         {/* Roster Header & Search */}
-        <div className="p-3.5 border-b border-slate-800 space-y-3">
+        <div className="p-3.5 border-b border-gray-200 dark:border-zinc-800 space-y-3 bg-gray-50/50 dark:bg-zinc-950/40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-emerald-400" />
-              <h2 className="font-extrabold text-sm text-white">WhatsApp Inbox</h2>
+              <MessageCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h2 className="font-extrabold text-sm text-gray-900 dark:text-white">WhatsApp Inbox</h2>
             </div>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
               v21.0 Cloud Desk
             </span>
           </div>
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 dark:text-zinc-500" />
             <input
               type="text"
               placeholder="Search chat name, phone, or Ref ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-800 bg-slate-900 text-slate-100 text-xs placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 text-xs placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
           </div>
 
@@ -347,8 +353,8 @@ export function WhatsAppChatView({
               onClick={() => setFilterTab("ALL")}
               className={`px-2.5 py-1 rounded-lg transition-colors ${
                 filterTab === "ALL"
-                  ? "bg-amber-500 text-slate-950 font-bold"
-                  : "bg-slate-900 text-slate-400 hover:text-white"
+                  ? "bg-amber-500 text-slate-950 font-bold shadow-sm"
+                  : "bg-gray-100 dark:bg-zinc-900 text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               All Chats
@@ -357,8 +363,8 @@ export function WhatsAppChatView({
               onClick={() => setFilterTab("UNREAD")}
               className={`px-2.5 py-1 rounded-lg transition-colors ${
                 filterTab === "UNREAD"
-                  ? "bg-amber-500 text-slate-950 font-bold"
-                  : "bg-slate-900 text-slate-400 hover:text-white"
+                  ? "bg-amber-500 text-slate-950 font-bold shadow-sm"
+                  : "bg-gray-100 dark:bg-zinc-900 text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               Unread
@@ -367,8 +373,8 @@ export function WhatsAppChatView({
               onClick={() => setFilterTab("HOT")}
               className={`px-2.5 py-1 rounded-lg transition-colors ${
                 filterTab === "HOT"
-                  ? "bg-red-500 text-white font-bold"
-                  : "bg-slate-900 text-slate-400 hover:text-white"
+                  ? "bg-red-500 text-white font-bold shadow-sm"
+                  : "bg-gray-100 dark:bg-zinc-900 text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               Hot / Harassment
@@ -377,7 +383,7 @@ export function WhatsAppChatView({
         </div>
 
         {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60">
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-zinc-800/60">
           {filteredConversations.length > 0 ? (
             filteredConversations.map((conv) => {
               const isSelected = conv.id === activeLeadId;
@@ -387,25 +393,28 @@ export function WhatsAppChatView({
               return (
                 <div
                   key={conv.id}
-                  onClick={() => setActiveLeadId(conv.id)}
+                  onClick={() => {
+                    setActiveLeadId(conv.id);
+                    setShowMobileChat(true);
+                  }}
                   className={`p-3.5 flex items-start gap-3 cursor-pointer transition-colors ${
                     isSelected
-                      ? "bg-slate-800/80 border-l-4 border-amber-400"
-                      : "hover:bg-slate-900/80"
+                      ? "bg-amber-50/70 dark:bg-zinc-800/80 border-l-4 border-amber-500 dark:border-amber-400"
+                      : "hover:bg-gray-50 dark:hover:bg-zinc-900/80"
                   }`}
                 >
                   {/* Avatar / Scale Icon */}
-                  <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center font-bold text-xs uppercase">
+                  <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 flex items-center justify-center font-bold text-xs uppercase">
                     {conv.fullName.slice(0, 2)}
                   </div>
 
                   {/* Body */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-xs text-white truncate">
+                      <h3 className="font-bold text-xs text-gray-900 dark:text-white truncate">
                         {conv.fullName}
                       </h3>
-                      <span className="text-[10px] text-slate-500 shrink-0">
+                      <span className="text-[10px] text-gray-400 dark:text-zinc-500 shrink-0">
                         {new Date(conv.lastMessageAt).toLocaleDateString("en-IN", {
                           month: "short",
                           day: "numeric",
@@ -414,14 +423,14 @@ export function WhatsAppChatView({
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-mono text-[10px] text-amber-400 font-bold">
+                      <span className="font-mono text-[10px] text-amber-600 dark:text-amber-400 font-bold">
                         {conv.referenceId}
                       </span>
                       <span
                         className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded ${
                           score.tier === "HOT"
-                            ? "bg-red-500/20 text-red-400"
-                            : "bg-amber-500/20 text-amber-300"
+                            ? "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+                            : "bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
                         }`}
                       >
                         {score.tier}
@@ -430,11 +439,11 @@ export function WhatsAppChatView({
 
                     {/* Last message snippet */}
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[11px] text-slate-400 truncate">
+                      <p className="text-[11px] text-gray-500 dark:text-zinc-400 truncate">
                         {lastMsg ? (
                           <>
                             {lastMsg.direction === "OUTBOUND" && (
-                              <span className="text-slate-500 font-semibold mr-1">You:</span>
+                              <span className="text-gray-400 dark:text-zinc-500 font-semibold mr-1">You:</span>
                             )}
                             {lastMsg.content}
                           </>
@@ -454,7 +463,7 @@ export function WhatsAppChatView({
               );
             })
           ) : (
-            <div className="p-8 text-center text-xs text-slate-500">
+            <div className="p-8 text-center text-xs text-gray-400 dark:text-zinc-500">
               No conversations found.
             </div>
           )}
@@ -463,32 +472,47 @@ export function WhatsAppChatView({
 
       {/* 2. CENTER PANE: Active Chat Window */}
       {activeConversation ? (
-        <div className="flex-1 flex flex-col bg-slate-900/90 relative">
+        <div
+          className={`flex-1 flex flex-col bg-gray-50/50 dark:bg-zinc-900/90 relative ${
+            showMobileChat ? "flex" : "hidden md:flex"
+          }`}
+        >
           {/* Active Chat Header */}
-          <div className="h-16 px-5 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4 shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="h-9 w-9 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+          <div className="h-16 px-4 sm:px-5 border-b border-gray-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/60 flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              {/* Back button for mobile */}
+              <button
+                type="button"
+                onClick={() => setShowMobileChat(false)}
+                className="md:hidden flex items-center gap-1 p-2 min-h-[44px] min-w-[44px] rounded-xl text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+                aria-label="Back to conversations"
+              >
+                <ChevronLeft className="h-5 w-5" />
+                <span className="text-xs font-bold">Inbox</span>
+              </button>
+
+              <div className="h-9 w-9 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs uppercase shrink-0">
                 {activeConversation.fullName.slice(0, 2)}
               </div>
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-extrabold text-sm text-white truncate">
+                  <h2 className="font-extrabold text-sm text-gray-900 dark:text-white truncate">
                     {activeConversation.fullName}
                   </h2>
-                  <span className="font-mono text-xs font-bold text-amber-400 px-1.5 rounded bg-slate-800">
+                  <span className="font-mono text-xs font-bold text-amber-600 dark:text-amber-400 px-1.5 rounded bg-gray-100 dark:bg-zinc-800">
                     {activeConversation.referenceId}
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300">
                     {activeConversation.status.replace("_", " ")}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-zinc-400">
                   <span>+{activeConversation.phone}</span>
                   {activeConversation.city && <span>📍 {activeConversation.city}</span>}
                   {activeConversation.totalDebtRange && (
-                    <span className="text-slate-300 font-semibold">
+                    <span className="text-gray-700 dark:text-zinc-300 font-semibold">
                       💰 {activeConversation.totalDebtRange}
                     </span>
                   )}
@@ -500,10 +524,11 @@ export function WhatsAppChatView({
             <div className="flex items-center gap-2">
               <a
                 href={`tel:${activeConversation.phone}`}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-200 transition-colors"
                 title="Direct Phone Call"
+                aria-label="Call client"
               >
-                <Phone className="h-4 w-4 text-emerald-400" />
+                <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </a>
 
               <a
@@ -512,8 +537,9 @@ export function WhatsAppChatView({
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm"
                 title="Open Direct in WhatsApp Web"
+                aria-label="Open direct WhatsApp Web"
               >
                 <ExternalLink className="h-4 w-4" />
               </a>
@@ -521,7 +547,7 @@ export function WhatsAppChatView({
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold border border-slate-700 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-xl bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-amber-700 dark:text-amber-400 text-xs font-bold border border-gray-200 dark:border-zinc-700 transition-colors shadow-sm"
                 title="Open 360° Case Portfolio"
               >
                 <FolderOpen className="h-3.5 w-3.5" />
@@ -534,8 +560,8 @@ export function WhatsAppChatView({
           <div
             className={`px-4 py-2 text-[11px] font-semibold border-b flex items-center justify-between ${
               is24hWindowActive
-                ? "bg-emerald-950/40 border-emerald-900/60 text-emerald-300"
-                : "bg-amber-950/40 border-amber-900/60 text-amber-300"
+                ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300"
+                : "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -554,7 +580,7 @@ export function WhatsAppChatView({
           {/* Message Thread Body */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
             {loadingMessages && messages.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 text-xs">
+              <div className="text-center py-12 text-gray-400 dark:text-zinc-500 text-xs">
                 Loading encrypted legal transcripts...
               </div>
             ) : Object.keys(groupedMessages).length > 0 ? (
@@ -562,7 +588,7 @@ export function WhatsAppChatView({
                 <div key={dateLabel} className="space-y-3">
                   {/* Date Badge */}
                   <div className="flex justify-center">
-                    <span className="px-3 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-400">
+                    <span className="px-3 py-0.5 rounded-full bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 text-[10px] font-mono text-gray-500 dark:text-zinc-400 shadow-sm">
                       {dateLabel}
                     </span>
                   </div>
@@ -579,8 +605,8 @@ export function WhatsAppChatView({
                         <div
                           className={`max-w-[85%] sm:max-w-[70%] rounded-2xl p-3.5 text-xs shadow-md space-y-1 ${
                             isOutbound
-                              ? "bg-emerald-950/90 border border-emerald-800/70 text-slate-100 rounded-tr-none"
-                              : "bg-slate-950 border border-slate-800 text-slate-100 rounded-tl-none"
+                              ? "bg-emerald-600 text-white dark:bg-emerald-950/90 dark:border dark:border-emerald-800/70 dark:text-zinc-100 rounded-tr-none"
+                              : "bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-100 rounded-tl-none shadow-sm"
                           }`}
                         >
                           {/* Message Content */}
@@ -591,7 +617,7 @@ export function WhatsAppChatView({
                           {/* Footer: Timestamp & Delivery Status */}
                           <div
                             className={`flex items-center gap-1.5 text-[10px] justify-end ${
-                              isOutbound ? "text-emerald-400/80" : "text-slate-500"
+                              isOutbound ? "text-emerald-100 dark:text-emerald-400/80" : "text-gray-400 dark:text-zinc-500"
                             }`}
                           >
                             <span>
@@ -604,15 +630,15 @@ export function WhatsAppChatView({
                             {isOutbound && (
                               <span>
                                 {msg.status === "READ" ? (
-                                  <CheckCheck className="h-3.5 w-3.5 text-emerald-400 inline" />
+                                  <CheckCheck className="h-3.5 w-3.5 text-emerald-200 dark:text-emerald-400 inline" />
                                 ) : msg.status === "DELIVERED" ? (
-                                  <CheckCheck className="h-3.5 w-3.5 text-slate-400 inline" />
+                                  <CheckCheck className="h-3.5 w-3.5 text-emerald-100 dark:text-slate-400 inline" />
                                 ) : msg.status === "FAILED" ? (
                                   <span title={msg.errorMessage || "Failed"}>
-                                    <AlertCircle className="h-3.5 w-3.5 text-red-400 inline" />
+                                    <AlertCircle className="h-3.5 w-3.5 text-red-300 dark:text-red-400 inline" />
                                   </span>
                                 ) : (
-                                  <Check className="h-3.5 w-3.5 text-slate-400 inline" />
+                                  <Check className="h-3.5 w-3.5 text-emerald-100 dark:text-slate-400 inline" />
                                 )}
                               </span>
                             )}
@@ -624,7 +650,7 @@ export function WhatsAppChatView({
                 </div>
               ))
             ) : (
-              <div className="text-center py-12 text-slate-500 text-xs">
+              <div className="text-center py-12 text-gray-400 dark:text-zinc-500 text-xs">
                 No chat history yet. Send an opening message below.
               </div>
             )}
@@ -632,8 +658,8 @@ export function WhatsAppChatView({
           </div>
 
           {/* Quick Legal Reply Action Bar */}
-          <div className="p-2.5 bg-slate-950/70 border-t border-slate-800/80 overflow-x-auto flex items-center gap-2 text-xs shrink-0">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0">
+          <div className="p-2.5 bg-gray-50/90 dark:bg-zinc-950/70 border-t border-gray-200 dark:border-zinc-800/80 overflow-x-auto flex items-center gap-2 text-xs shrink-0 scrollbar-thin">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 shrink-0">
               Quick Replies:
             </span>
 
@@ -642,10 +668,10 @@ export function WhatsAppChatView({
                 key={tmpl.id}
                 type="button"
                 onClick={() => setInputText(tmpl.content)}
-                className={`px-2.5 py-1 rounded-lg font-medium whitespace-nowrap text-[11px] border transition-colors ${
+                className={`px-2.5 py-1 rounded-lg font-medium whitespace-nowrap text-[11px] border transition-colors shadow-sm ${
                   tmpl.title.includes("Warning") || tmpl.title.includes("Direct Payment")
-                    ? "bg-red-950/50 hover:bg-red-900/60 text-red-200 border-red-900"
-                    : "bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-700"
+                    ? "bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-700 dark:text-red-200 border-red-200 dark:border-red-900"
+                    : "bg-white dark:bg-zinc-800/80 hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 border-gray-200 dark:border-zinc-700"
                 }`}
               >
                 {tmpl.title}
@@ -654,7 +680,7 @@ export function WhatsAppChatView({
           </div>
 
           {/* Composer Box */}
-          <div className="p-3 border-t border-slate-800 bg-slate-950 shrink-0">
+          <div className="p-3 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shrink-0">
             <div className="flex items-end gap-2.5">
               <textarea
                 value={inputText}
@@ -662,14 +688,15 @@ export function WhatsAppChatView({
                 onKeyDown={handleKeyDown}
                 placeholder="Type your legal response... (Press Enter to send, Shift+Enter for new line)"
                 rows={2}
-                className="flex-1 p-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400 placeholder:text-slate-600 resize-none"
+                className="flex-1 p-3 rounded-xl border border-gray-300 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder:text-gray-400 dark:placeholder:text-zinc-600 resize-none"
               />
 
               <button
                 type="button"
                 onClick={() => handleSendMessage()}
                 disabled={sending || !inputText.trim()}
-                className="h-11 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all active:scale-95 shadow-lg shadow-emerald-950"
+                className="h-11 px-4 min-w-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all active:scale-95 shadow-md shadow-emerald-950/20"
+                aria-label="Send message"
               >
                 <Send className="h-4 w-4" />
                 <span className="hidden sm:inline">Send</span>
@@ -678,9 +705,9 @@ export function WhatsAppChatView({
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center space-y-2">
-          <MessageCircle className="h-12 w-12 text-slate-700" />
-          <h3 className="text-base font-bold text-slate-400">No Chat Selected</h3>
+        <div className="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-zinc-500 p-8 text-center space-y-2">
+          <MessageCircle className="h-12 w-12 text-gray-300 dark:text-zinc-700" />
+          <h3 className="text-base font-bold text-gray-700 dark:text-zinc-400">No Chat Selected</h3>
           <p className="text-xs max-w-sm">
             Select a borrower from the roster on the left to review encrypted WhatsApp transcripts and reply.
           </p>

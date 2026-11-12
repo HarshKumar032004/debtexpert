@@ -74,43 +74,43 @@ export function SystemAutomation({
   return (
     <div className="space-y-6">
       {/* Automation Header Card */}
-      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-6">
+      <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl space-y-6">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
             <Cpu className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white">System Automation & Work Allocation</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">System Automation & Work Allocation</h2>
+            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
               Automated intake routing engines and attorney-client workload balancers.
             </p>
           </div>
         </div>
 
         {/* Round-Robin Toggle Card */}
-        <div className="p-5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-5 rounded-xl bg-gray-50 dark:bg-zinc-950/60 border border-gray-200 dark:border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-xl">
             <div className="flex items-center gap-2">
-              <RotateCcw className="h-4 w-4 text-amber-400" />
-              <h3 className="text-sm font-bold text-white">Round-Robin Lead Auto-Assignment</h3>
+              <RotateCcw className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">Round-Robin Lead Auto-Assignment</h3>
               <span
                 className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase ${
                   autoAssign
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                    : "bg-slate-800 text-slate-400 border border-slate-700"
+                    ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-500/30"
+                    : "bg-gray-200 text-gray-700 dark:bg-zinc-800 dark:text-zinc-400 border border-gray-300 dark:border-zinc-700"
                 }`}
               >
                 {autoAssign ? "Engine Online" : "Manual Only"}
               </span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-gray-600 dark:text-zinc-400 leading-relaxed">
               Automatically distribute incoming website leads to the Support Agent or Legal Advisor with the fewest active cases using a Least-Loaded-Agent algorithm.
             </p>
           </div>
 
           {/* Toggle Switch */}
           <div className="flex items-center gap-3 shrink-0">
-            <span className="text-xs font-mono font-bold text-slate-300">
+            <span className="text-xs font-mono font-bold text-gray-700 dark:text-zinc-300">
               {autoAssign ? "ENABLED" : "DISABLED"}
             </span>
 
@@ -118,17 +118,18 @@ export function SystemAutomation({
               type="button"
               disabled={!isSuperAdmin || toggling}
               onClick={handleToggleAutoAssign}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
-                autoAssign ? "bg-amber-500" : "bg-slate-800"
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 min-h-[24px] ${
+                autoAssign ? "bg-amber-500" : "bg-gray-300 dark:bg-zinc-800"
               }`}
               title={
                 isSuperAdmin
                   ? "Toggle Round-Robin Auto-Assignment"
                   : "Super Administrator authority required"
               }
+              aria-label="Toggle Round-Robin Auto-Assignment"
             >
               <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-slate-950 shadow ring-0 transition duration-200 ease-in-out ${
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-zinc-950 shadow ring-0 transition duration-200 ease-in-out ${
                   autoAssign ? "translate-x-5" : "translate-x-0"
                 }`}
               />
@@ -138,22 +139,22 @@ export function SystemAutomation({
 
         {/* Algorithm Blueprint Notes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-xs">
-          <div className="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/60 space-y-1">
-            <span className="text-amber-400 font-bold block text-[11px]">1. Tier 1 Allocation</span>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Inquiries evaluate active <span className="text-slate-200 font-mono">SUPPORT_AGENT</span> staff first by lowest assigned case count.
+          <div className="p-3.5 rounded-xl bg-gray-50/50 dark:bg-zinc-950/40 border border-gray-200 dark:border-zinc-800/60 space-y-1">
+            <span className="text-amber-600 dark:text-amber-400 font-bold block text-[11px]">1. Tier 1 Allocation</span>
+            <p className="text-gray-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+              Inquiries evaluate active <span className="text-gray-900 dark:text-zinc-200 font-mono">SUPPORT_AGENT</span> staff first by lowest assigned case count.
             </p>
           </div>
-          <div className="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/60 space-y-1">
-            <span className="text-blue-400 font-bold block text-[11px]">2. Fail-Safe Fallback</span>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              If no support agents are active, gracefully cascades to least-loaded active <span className="text-slate-200 font-mono">LEGAL_ADVISOR</span>.
+          <div className="p-3.5 rounded-xl bg-gray-50/50 dark:bg-zinc-950/40 border border-gray-200 dark:border-zinc-800/60 space-y-1">
+            <span className="text-blue-600 dark:text-blue-400 font-bold block text-[11px]">2. Fail-Safe Fallback</span>
+            <p className="text-gray-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+              If no support agents are active, gracefully cascades to least-loaded active <span className="text-gray-900 dark:text-zinc-200 font-mono">LEGAL_ADVISOR</span>.
             </p>
           </div>
-          <div className="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/60 space-y-1">
-            <span className="text-emerald-400 font-bold block text-[11px]">3. Audit Trail</span>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Every routing event logs a permanent <span className="text-slate-200 font-mono">LEAD_AUTO_ASSIGNED</span> entry in Activity Log.
+          <div className="p-3.5 rounded-xl bg-gray-50/50 dark:bg-zinc-950/40 border border-gray-200 dark:border-zinc-800/60 space-y-1">
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold block text-[11px]">3. Audit Trail</span>
+            <p className="text-gray-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+              Every routing event logs a permanent <span className="text-gray-900 dark:text-zinc-200 font-mono">LEAD_AUTO_ASSIGNED</span> entry in Activity Log.
             </p>
           </div>
         </div>
