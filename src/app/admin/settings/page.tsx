@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SettingsView } from "@/components/admin/settings-view";
 import { env } from "@/lib/env";
+import { getSystemHealth } from "@/lib/system-health";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function AdminSettingsPage() {
     redirect("/admin");
   }
 
-  const [staffUsersRaw, templatesRaw, autoAssignSetting] = await Promise.all([
+  const [staffUsersRaw, templatesRaw, autoAssignSetting, initialHealth] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "asc" },
       include: {
@@ -34,6 +35,7 @@ export default async function AdminSettingsPage() {
     prisma.systemSetting.findUnique({
       where: { key: "AUTO_ASSIGN_LEADS" },
     }),
+    getSystemHealth(),
   ]);
 
   const staffUsers = staffUsersRaw.map((u) => ({
@@ -58,7 +60,7 @@ export default async function AdminSettingsPage() {
   const autoAssignLeads = autoAssignSetting?.value === "true";
 
   const configState = {
-    dbProvider: "Neon Serverless PostgreSQL (AWS us-east-2)",
+    dbProvider: initialHealth.database.provider,
     hasMetaToken: Boolean(env.META_ACCESS_TOKEN),
     hasPhoneNumberId: Boolean(env.META_PHONE_NUMBER_ID),
     adminWhatsAppNumber: env.ADMIN_WHATSAPP_NUMBER,
@@ -78,6 +80,7 @@ export default async function AdminSettingsPage() {
       templates={templates}
       autoAssignLeads={autoAssignLeads}
       configState={configState}
+      initialHealth={initialHealth}
     />
   );
 }

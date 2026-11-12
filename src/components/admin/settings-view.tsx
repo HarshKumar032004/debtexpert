@@ -11,12 +11,17 @@ import {
   AlertCircle,
   X,
   Loader2,
+  Database,
+  RefreshCw,
+  Zap,
+  Activity,
 } from "lucide-react";
 import { toast } from "sonner";
 import { UserRole } from "@/lib/auth";
 import { UserManagement, StaffUserItem } from "@/components/admin/settings/user-management";
 import { TemplateManager, TemplateItem } from "@/components/admin/settings/template-manager";
 import { SystemAutomation } from "@/components/admin/settings/system-automation";
+import { SystemHealthData } from "@/lib/system-health";
 
 interface SettingsViewProps {
   currentUser: {
@@ -36,6 +41,7 @@ interface SettingsViewProps {
     appUrl: string;
     nodeEnv: string;
   };
+  initialHealth?: SystemHealthData;
 }
 
 interface ToastMessage {
@@ -51,10 +57,34 @@ export function SettingsView({
   templates,
   autoAssignLeads,
   configState,
+  initialHealth,
 }: SettingsViewProps) {
   const [activeTab, setActiveTab] = React.useState<"STAFF" | "TEMPLATES" | "AUTOMATION">("STAFF");
   const [testingWhatsApp, setTestingWhatsApp] = React.useState(false);
   const [testResult, setTestResult] = React.useState<string | null>(null);
+
+  // Dynamic Live Health State
+  const [health, setHealth] = React.useState<SystemHealthData | null>(initialHealth || null);
+  const [refreshingHealth, setRefreshingHealth] = React.useState(false);
+
+  const handleRefreshHealth = async () => {
+    setRefreshingHealth(true);
+    try {
+      const res = await fetch("/api/admin/health", { cache: "no-store" });
+      const data = await res.json();
+      if (res.ok && data.success && data.health) {
+        setHealth(data.health);
+        addToast("success", "Diagnostics Updated", "Live database and Meta API probes verified successfully.");
+      } else {
+        addToast("error", "Diagnostics Check Failed", data.error || "Could not retrieve live health probe.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Network error probing health.";
+      addToast("error", "Diagnostic Error", msg);
+    } finally {
+      setRefreshingHealth(false);
+    }
+  };
 
   // Global Toast System
   const [toasts, setToasts] = React.useState<ToastMessage[]>([]);
@@ -181,48 +211,153 @@ export function SettingsView({
             onToast={addToast}
           />
 
-          {/* Grid: Meta WhatsApp & Security Health Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Meta WhatsApp Cloud API Card */}
-            <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <MessageSquare className="h-5 w-5" />
+          {/* Real-time Diagnostics Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-gray-100/80 dark:bg-zinc-900/80 border border-gray-200 dark:border-zinc-800">
+            <div className="flex items-center gap-2.5">
+              <Activity className="h-5 w-5 text-amber-500 animate-pulse shrink-0" />
+              <div>
+                <h3 className="text-xs font-bold text-gray-900 dark:text-white">Live System Diagnostics & Dynamic Health</h3>
+                <p className="text-[11px] text-gray-500 dark:text-zinc-400">
+                  Real-time query probe for PostgreSQL Database, Meta WhatsApp Graph API, and Gateway Firewall.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleRefreshHealth}
+              disabled={refreshingHealth}
+              className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 text-xs font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5 transition-all shadow-sm active:scale-95 disabled:opacity-60 shrink-0"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 text-amber-500 ${refreshingHealth ? "animate-spin" : ""}`} />
+              <span>{refreshingHealth ? "Probing System..." : "Re-check Live Health"}</span>
+            </button>
+          </div>
+
+          {/* Grid: Database, Meta WhatsApp, & Security Health Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Card 1: Database Engine Status */}
+            <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl space-y-4 flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <Database className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900 dark:text-white">Database Engine</h4>
+                      <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-400">Prisma ORM • Client Pool</span>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-gray-900 dark:text-white">Meta WhatsApp Cloud API</h2>
-                    <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">Target: Graph API v21.0</span>
-                  </div>
+
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                      health?.database.active
+                        ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-500/30"
+                        : "bg-rose-500/10 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-500/30"
+                    }`}
+                  >
+                    {health?.database.active && (
+                      <span className="relative flex h-1.5 w-1.5 mr-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                      </span>
+                    )}
+                    {health?.database.active ? "Active & Connected" : "Disconnected"}
+                  </span>
                 </div>
 
-                <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
-                    configState.hasMetaToken
-                      ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-500/30"
-                      : "bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30"
-                  }`}
-                >
-                  {configState.hasMetaToken ? "Live Production" : "Local Dev Simulation"}
-                </span>
+                <div className="space-y-2 text-xs border-t border-gray-200 dark:border-zinc-800 pt-3">
+                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
+                    <span className="text-gray-500 dark:text-zinc-400">Status:</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {health?.database.status || "CONNECTED"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
+                    <span className="text-gray-500 dark:text-zinc-400">Query Latency:</span>
+                    <span className="font-mono text-amber-600 dark:text-amber-400 font-bold">
+                      ⚡ {health?.database.latencyMs ?? 0} ms
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
+                    <span className="text-gray-500 dark:text-zinc-400">Host Engine:</span>
+                    <span className="font-mono text-gray-900 dark:text-white font-semibold truncate max-w-[160px]" title={health?.database.provider}>
+                      {health?.database.provider || configState.dbProvider}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-gray-500 dark:text-zinc-400">Live Records:</span>
+                    <span className="font-mono text-gray-700 dark:text-zinc-300">
+                      {health?.database.totalLeads ?? 0} Leads • {health?.database.totalUsers ?? 0} Staff
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2 text-xs border-t border-gray-200 dark:border-zinc-800 pt-3">
-                <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
-                  <span className="text-gray-500 dark:text-zinc-400">Admin Notification Mobile:</span>
-                  <span className="font-mono text-gray-900 dark:text-white font-bold">+{configState.adminWhatsAppNumber}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
-                  <span className="text-gray-500 dark:text-zinc-400">Token Status:</span>
-                  <span className="font-mono text-gray-700 dark:text-zinc-300">
-                    {configState.hasMetaToken ? "Loaded via .env" : "Mock Fallback Active (Clean Console Logs)"}
+              <div className="pt-2 text-[10px] text-gray-500 dark:text-zinc-500 flex items-center gap-1">
+                <Zap className="h-3 w-3 text-amber-500 shrink-0" />
+                <span>SSL Connection Pool • Active Health Probe</span>
+              </div>
+            </div>
+
+            {/* Card 2: Meta WhatsApp Cloud API Card */}
+            <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl space-y-4 flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <MessageSquare className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900 dark:text-white">Meta WhatsApp API</h4>
+                      <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">Graph API v21.0/v26.0</span>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                      health?.meta.active
+                        ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-500/30"
+                        : health?.meta.status === "AUTH_ERROR"
+                        ? "bg-rose-500/10 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-500/30"
+                        : "bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30"
+                    }`}
+                  >
+                    {health?.meta.active && (
+                      <span className="relative flex h-1.5 w-1.5 mr-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                      </span>
+                    )}
+                    {health?.meta.active ? "Live & Authorized" : health?.meta.status === "AUTH_ERROR" ? "Auth Error" : "Simulation Mock"}
                   </span>
                 </div>
-                <div className="flex justify-between py-1">
-                  <span className="text-gray-500 dark:text-zinc-400">Phone Number ID:</span>
-                  <span className="font-mono text-gray-700 dark:text-zinc-300">
-                    {configState.hasPhoneNumberId ? "Loaded via .env" : "Using Dev Simulation Mock"}
-                  </span>
+
+                <div className="space-y-2 text-xs border-t border-gray-200 dark:border-zinc-800 pt-3">
+                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
+                    <span className="text-gray-500 dark:text-zinc-400">Account / Verified:</span>
+                    <span className="font-mono text-gray-900 dark:text-white font-bold truncate max-w-[150px]">
+                      {health?.meta.verifiedName || "WhatsApp Business"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
+                    <span className="text-gray-500 dark:text-zinc-400">Sender Number:</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold truncate max-w-[150px]">
+                      {health?.meta.displayPhoneNumber || health?.meta.phoneNumberId || "Not Registered"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
+                    <span className="text-gray-500 dark:text-zinc-400">Quality / Ping:</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      {health?.meta.qualityRating || "GREEN"} {health?.meta.latencyMs ? `(⚡${health.meta.latencyMs}ms)` : ""}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-gray-500 dark:text-zinc-400">Admin Receiver:</span>
+                    <span className="font-mono text-gray-700 dark:text-zinc-300">
+                      +{health?.meta.adminWhatsAppNumber || configState.adminWhatsAppNumber}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -231,7 +366,7 @@ export function SettingsView({
                 <button
                   onClick={handleTestWhatsApp}
                   disabled={testingWhatsApp}
-                  className="w-full py-2.5 px-3 rounded-xl bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 text-xs font-bold text-gray-900 dark:text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-50 active:scale-95 min-h-[44px]"
+                  className="w-full py-2 px-3 rounded-xl bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 text-xs font-bold text-gray-900 dark:text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-50 active:scale-95 min-h-[38px]"
                 >
                   {testingWhatsApp ? (
                     <>
@@ -246,42 +381,66 @@ export function SettingsView({
                   )}
                 </button>
                 {testResult && (
-                  <p className="mt-2 text-[11px] p-2.5 rounded-lg bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300">
+                  <p className="mt-2 text-[11px] p-2 rounded-lg bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300">
                     {testResult}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Security & Database Card */}
-            <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl space-y-4">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                  <ShieldCheck className="h-5 w-5" />
+            {/* Card 3: Security & Gateway Firewall */}
+            <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl space-y-4 flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                      <ShieldCheck className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900 dark:text-white">Security & Gateway</h4>
+                      <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400">Ingestion Guard</span>
+                    </div>
+                  </div>
+
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-500/30">
+                    <span className="relative flex h-1.5 w-1.5 mr-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    Guarded
+                  </span>
                 </div>
-                <div>
-                  <h2 className="text-sm font-bold text-gray-900 dark:text-white">Security & Environment</h2>
-                  <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">JWT & Ingestion Firewall</span>
+
+                <div className="space-y-2 text-xs border-t border-gray-200 dark:border-zinc-800 pt-3">
+                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
+                    <span className="text-gray-500 dark:text-zinc-400">Webhook Verification:</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      {health?.security.webhookConfigured ? "Token Guard Active" : "Unset"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
+                    <span className="text-gray-500 dark:text-zinc-400">HMAC-SHA256:</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      {health?.security.appSecretConfigured ? "Constant-Time Match" : "Dev Simulation"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
+                    <span className="text-gray-500 dark:text-zinc-400">Session JWT Token:</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      HttpOnly (8h TTL)
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-gray-500 dark:text-zinc-400">Bot Honeypot:</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      Active (Silent Drop)
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2 text-xs border-t border-gray-200 dark:border-zinc-800 pt-3">
-                <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
-                  <span className="text-gray-500 dark:text-zinc-400">Database Engine:</span>
-                  <span className="font-mono text-gray-900 dark:text-white font-bold">{configState.dbProvider}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
-                  <span className="text-gray-500 dark:text-zinc-400">Session Cookie:</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">HttpOnly, SameSite=Strict (8h)</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-gray-100 dark:border-zinc-800/60">
-                  <span className="text-gray-500 dark:text-zinc-400">Bot Honeypot Protection:</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">Enabled (Silent Drop)</span>
-                </div>
-                <div className="flex justify-between py-1">
-                  <span className="text-gray-500 dark:text-zinc-400">Password Hashing:</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">Bcrypt (Salt Rounds: 10)</span>
-                </div>
+              <div className="pt-2 text-[10px] text-gray-500 dark:text-zinc-500 truncate" title={health?.security.appUrl}>
+                <span>App URL: {health?.security.appUrl || configState.appUrl}</span>
               </div>
             </div>
           </div>
