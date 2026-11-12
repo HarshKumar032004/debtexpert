@@ -316,20 +316,36 @@ export function SettingsView({
 
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                      health?.meta.active
+                      health?.meta.status === "LIVE_CONNECTED"
                         ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-500/30"
+                        : health?.meta.status === "RESTRICTED"
+                        ? "bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30"
                         : health?.meta.status === "AUTH_ERROR"
                         ? "bg-rose-500/10 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-500/30"
-                        : "bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30"
+                        : "bg-gray-500/10 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300 border border-gray-500/30"
                     }`}
                   >
                     {health?.meta.active && (
                       <span className="relative flex h-1.5 w-1.5 mr-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                        <span
+                          className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                            health?.meta.status === "LIVE_CONNECTED" ? "bg-emerald-400" : "bg-amber-400"
+                          } opacity-75`}
+                        ></span>
+                        <span
+                          className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                            health?.meta.status === "LIVE_CONNECTED" ? "bg-emerald-500" : "bg-amber-500"
+                          }`}
+                        ></span>
                       </span>
                     )}
-                    {health?.meta.active ? "Live & Authorized" : health?.meta.status === "AUTH_ERROR" ? "Auth Error" : "Simulation Mock"}
+                    {health?.meta.status === "LIVE_CONNECTED"
+                      ? "Live & Connected"
+                      : health?.meta.status === "RESTRICTED"
+                      ? "Meta Action Required"
+                      : health?.meta.status === "AUTH_ERROR"
+                      ? "Auth Error"
+                      : "Simulation Mock"}
                   </span>
                 </div>
 
@@ -358,6 +374,23 @@ export function SettingsView({
                       +{health?.meta.adminWhatsAppNumber || configState.adminWhatsAppNumber}
                     </span>
                   </div>
+
+                  {/* Render Meta Restrictions / Required Actions */}
+                  {health?.meta.healthErrors && health.meta.healthErrors.length > 0 && (
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-800 dark:text-amber-300 space-y-1.5 mt-2">
+                      <div className="font-bold flex items-center gap-1.5">
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>Delivery Blocked by Meta:</span>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 text-[10px] leading-relaxed text-amber-900/90 dark:text-amber-200/90">
+                        {health.meta.healthErrors.map((err, i) => (
+                          <li key={i}>
+                            <span className="font-semibold">[{err.entityType} #{err.code}]</span> {err.description}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
 

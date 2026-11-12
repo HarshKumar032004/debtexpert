@@ -1,6 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
 
+export interface MetaHealthError {
+  entityType: string;
+  code: number;
+  description: string;
+  solution?: string;
+}
+
 export interface SystemHealthData {
   timestamp: string;
   database: {
@@ -13,8 +20,9 @@ export interface SystemHealthData {
     error?: string;
   };
   meta: {
-    status: "LIVE_CONNECTED" | "AUTH_ERROR" | "SIMULATION";
+    status: "LIVE_CONNECTED" | "RESTRICTED" | "AUTH_ERROR" | "SIMULATION";
     active: boolean;
+    canSendMessage?: "AVAILABLE" | "BLOCKED";
     latencyMs?: number;
     displayPhoneNumber?: string;
     verifiedName?: string;
@@ -22,6 +30,7 @@ export interface SystemHealthData {
     phoneNumberId?: string;
     adminWhatsAppNumber: string;
     hasToken: boolean;
+    healthErrors?: MetaHealthError[];
     error?: string;
   };
   security: {
@@ -80,8 +89,10 @@ export async function getSystemHealth(): Promise<SystemHealthData> {
   }
 
   // 2. Live Meta WhatsApp API Probe
-  let metaStatus: "LIVE_CONNECTED" | "AUTH_ERROR" | "SIMULATION" = "SIMULATION";
+  let metaStatus: "LIVE_CONNECTED" | "RESTRICTED" | "AUTH_ERROR" | "SIMULATION" = "SIMULATION";
   let metaActive = false;
+  let canSendMessage: "AVAILABLE" | "BLOCKED" | undefined;
+  let healthErrors: MetaHealthError[] | undefined;
   let metaLatencyMs: number | undefined;
   let displayPhoneNumber: string | undefined;
   let verifiedName: string | undefined;
@@ -98,7 +109,7 @@ export async function getSystemHealth(): Promise<SystemHealthData> {
       const timeoutId = setTimeout(() => controller.abort(), 6000);
 
       const res = await fetch(
-        `https://graph.facebook.com/v21.0/${env.META_PHONE_NUMBER_ID}?fields=verified_name,display_phone_number,quality_rating`,
+        `https://graph.facebook.com/v21.0/${env.META_PHONE_NUMBER_ID}?fields=verified_name,display_phone_number,quality_rating,health_status`,
         {
           headers: {
             Authorization: `Bearer ${env.META_ACCESS_TOKEN}`,
@@ -113,10 +124,45 @@ export async function getSystemHealth(): Promise<SystemHealthData> {
       const data = await res.json();
       if (res.ok && !data.error) {
         metaActive = true;
-        metaStatus = "LIVE_CONNECTED";
         displayPhoneNumber = data.display_phone_number;
         verifiedName = data.verified_name;
         qualityRating = data.quality_rating;
+
+        // Parse Meta Health Status and restrictions
+        if (data.health_status) {
+          canSendMessage = data.health_status.can_send_message;
+          const parsedErrors: MetaHealthError[] = [];
+
+          if (Array.isArray(data.health_status.entities)) {
+            for (const ent of data.health_status.entities) {
+              if (Array.isArray(ent.errors)) {
+                for (const err of ent.errors) {
+                  // Filter out irrelevant SIP calling errors
+                  if (err.error_code !== 138024 && err.error_code !== 138025) {
+                    parsedErrors.push({
+                      entityType: ent.entity_type || "UNKNOWN",
+                      code: err.error_code,
+                      description: err.error_description || "Meta policy restriction",
+                      solution: err.possible_solution,
+                    });
+                  }
+                }
+              }
+            }
+          }
+
+          if (parsedErrors.length > 0) {
+            healthErrors = parsedErrors;
+          }
+
+          if (canSendMessage === "BLOCKED") {
+            metaStatus = "RESTRICTED";
+          } else {
+            metaStatus = "LIVE_CONNECTED";
+          }
+        } else {
+          metaStatus = "LIVE_CONNECTED";
+        }
       } else {
         metaActive = false;
         metaStatus = "AUTH_ERROR";
@@ -145,6 +191,7 @@ export async function getSystemHealth(): Promise<SystemHealthData> {
     meta: {
       status: metaStatus,
       active: metaActive,
+      canSendMessage,
       latencyMs: metaLatencyMs,
       displayPhoneNumber,
       verifiedName,
@@ -152,6 +199,7 @@ export async function getSystemHealth(): Promise<SystemHealthData> {
       phoneNumberId: env.META_PHONE_NUMBER_ID,
       adminWhatsAppNumber: env.ADMIN_WHATSAPP_NUMBER,
       hasToken,
+      healthErrors,
       error: metaError,
     },
     security: {
