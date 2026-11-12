@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -33,11 +34,16 @@ const serviceIcons = {
 
 export function Navbar() {
   const pathname = usePathname();
+  const [mounted, setMounted] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [servicesDropdownOpen, setServicesDropdownOpen] = React.useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -48,15 +54,30 @@ export function Navbar() {
   }, []);
 
   React.useEffect(() => {
-    // Lock body scroll when mobile menu is open
+    // Bulletproof scroll-lock for mobile & desktop
     if (mobileMenuOpen) {
+      const scrollY = window.scrollY;
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+      const originalPosition = document.body.style.position;
+      const originalTop = document.body.style.top;
+      const originalWidth = document.body.style.width;
+
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+
+      return () => {
+        document.documentElement.style.overflow = originalHtmlOverflow;
+        document.body.style.overflow = originalBodyOverflow;
+        document.body.style.position = originalPosition;
+        document.body.style.top = originalTop;
+        document.body.style.width = originalWidth;
+        window.scrollTo(0, scrollY);
+      };
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [mobileMenuOpen]);
 
   React.useEffect(() => {
@@ -318,15 +339,15 @@ export function Navbar() {
         </div>
 
         {/* Mobile Fullscreen Navigation Overlay */}
-        {mobileMenuOpen && (
+        {mounted && mobileMenuOpen && createPortal(
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Mobile Navigation Menu"
-            className="lg:hidden fixed inset-0 z-[100] h-screen w-screen bg-white dark:bg-zinc-950 overflow-y-auto flex flex-col"
+            className="lg:hidden fixed inset-0 z-[100] h-[100dvh] w-full bg-white dark:bg-zinc-950 overflow-hidden flex flex-col overscroll-contain"
           >
             {/* Header with standardized Logo and prominent Close (X) button */}
-            <div className="flex items-center justify-between px-5 h-16 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shrink-0">
+            <div className="flex items-center justify-between px-5 h-16 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shrink-0 touch-none">
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
@@ -356,7 +377,7 @@ export function Navbar() {
             </div>
 
             {/* Scrollable Links Area */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2.5">
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-2.5 touch-pan-y">
               {/* Home Link */}
               <Link
                 href="/"
@@ -527,7 +548,7 @@ export function Navbar() {
             </div>
 
             {/* Full-Width Pinned Bottom Drawer CTA */}
-            <div className="p-4 border-t border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md space-y-2.5 shrink-0">
+            <div className="p-4 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 space-y-2.5 shrink-0 touch-none">
               <Link
                 href="/contact"
                 onClick={() => setMobileMenuOpen(false)}
@@ -548,7 +569,8 @@ export function Navbar() {
                 <span>WhatsApp Legal Helpline</span>
               </a>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </nav>
     </header>
