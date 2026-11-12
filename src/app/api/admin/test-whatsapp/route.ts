@@ -29,17 +29,29 @@ export async function POST() {
       source: "ADMIN_SETTINGS_DIAGNOSTIC",
     });
 
+    if (!testResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: testResult.error || "Meta WhatsApp Cloud API rejected the message dispatch.",
+          result: testResult,
+        },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
       result: testResult,
       message: testResult.simulated
         ? "Simulated WhatsApp alert logged to server console (Local Dev mode)."
-        : "Live Meta WhatsApp Cloud API alert dispatched to Admin phone.",
+        : `Live Meta alert accepted by Meta (Message ID: ${testResult.waMessageId || "OK"}).`,
     });
   } catch (error) {
     console.error("Test WhatsApp API Error:", error);
+    const msg = error instanceof Error ? error.message : "Failed to dispatch test notification";
     return NextResponse.json(
-      { success: false, error: "Failed to dispatch test notification" },
+      { success: false, error: msg },
       { status: 500 }
     );
   }
